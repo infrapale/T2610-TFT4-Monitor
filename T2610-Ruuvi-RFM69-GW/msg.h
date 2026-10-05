@@ -5,8 +5,6 @@
 #define MSG_MAX_FIELD_LEN       16
 #define MSG_MAX_RAW_MSG_LEN     200
 #define MSG_MAX_SMS_CMD_LEN     8
-#define MSG_MAX_RFM_MSG_LEN     64
-
 
 typedef enum 
 {
@@ -25,22 +23,17 @@ typedef enum
     SMS_CMD_SENSOR_PIHA1,
     SMS_CMD_SENSOR_REPO1,
     SMS_CMD_SENSOR_REPO2,
-    SMS_CMD_ALL_TEMPERATURE,
     SMS_CMD_NBR_OF
 } sms_cmd_type_et;
-
 
 
 typedef struct 
 {
     char        raw[MSG_MAX_RAW_MSG_LEN];
-    char        rfm[MSG_MAX_RFM_MSG_LEN];
     msg_from_et from;
     char        fields[MSG_MAX_FIELDS][MSG_MAX_FIELD_LEN];
     uint8_t     field_count;
-    bool        rx_msg_avail;
 } msg_st;
-
 
 
 typedef struct
@@ -70,6 +63,6 @@ void msg_time_action(void);
 
 void msg_send_repo1(void);
 
-void msg_send_all_temp(void);
+void msg_send_tft(char *buff);
 
 #endif

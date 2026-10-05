@@ -5,16 +5,16 @@
 #include <time.h>
 #include "main.h"
 #include "msg.h"
-#include "lte.h"
+#include "r69.h"
+#include "io.h"
 #include "atask.h"
-#include "sensor.h"
+//#include "sensor.h"
 #include "clock.h"
 
 
-
 extern main_ctrl_st main_ctrl;
-extern sensor_st sensor[SENSOR_NBR_OF];
-extern sensor_value_st value_array[];
+// extern sensor_st sensor[SENSOR_NBR_OF];
+// extern sensor_value_st value_array[];
 
 sms_cmd_st sms_cmd[SMS_CMD_NBR_OF] =
 {
@@ -24,8 +24,6 @@ sms_cmd_st sms_cmd[SMS_CMD_NBR_OF] =
     {"PIHA1",   SMS_CMD_SENSOR_PIHA1},
     {"REPO1",   SMS_CMD_SENSOR_REPO1},
     {"REPO2",   SMS_CMD_SENSOR_REPO2},
-    {"TEMP",    SMS_CMD_ALL_TEMPERATURE},
-
 };
 
 void msg_task(void);
@@ -185,90 +183,35 @@ size_t msg_set_sms_string(char *sms_str)
     return len;
 } 
 
+void msg_send_tft(char *buff)
+{
+    SerialTft.println(buff);
+}
+
 void msg_send_repo1(void)
 {
-    char    buff[SMS_LEN];
+    char    buff[ R69_MSG_SIZE];
     uint8_t arr_indx[4]; 
-    arr_indx[0] = sensor[SENSOR_KHH].value_indx[VALUE_TEMPERATURE];
-    arr_indx[1] = sensor[SENSOR_KHH].value_indx[VALUE_HUMIDITY];
+    // arr_indx[0] = sensor[SENSOR_KHH].value_indx[VALUE_TEMPERATURE];
+    // arr_indx[1] = sensor[SENSOR_KHH].value_indx[VALUE_HUMIDITY];
 
-    sprintf(buff,"KHH: %0.1fC, Min: %0.1fC, Max: %0.1fC, Avg: %0.1fC, Nbr: %d, Hum: %d%",
-        value_array[arr_indx[0]].last,
-        value_array[arr_indx[0]].min,
-        value_array[arr_indx[0]].max,
-        value_array[arr_indx[0]].average,
-        value_array[arr_indx[0]].daily_cntr,
-        value_array[arr_indx[1]].last
-    );
-    Serial.println(buff);
+    // sprintf(buff,"KHH: %0.1fC, Min: %0.1fC, Max: %0.1fC, Avg: %0.1fC, Nbr: %d, Hum: %d%",
+    //     value_array[arr_indx[0]].last,
+    //     value_array[arr_indx[0]].min,
+    //     value_array[arr_indx[0]].max,
+    //     value_array[arr_indx[0]].average,
+    //     value_array[arr_indx[0]].daily_cntr,
+    //     value_array[arr_indx[1]].last
+    // );
+    // Serial.println(buff);
     // lte_send_msg(lte_get_sender_nbr(), buff);
 }
-
-void msg_send_ruuvi_repo(uint8_t sindx)
-{
-    char    buff[SMS_LEN];
-    uint8_t arr_indx[4]; 
-    arr_indx[0] = sensor[sindx].value_indx[VALUE_TEMPERATURE];
-    arr_indx[1] = sensor[sindx].value_indx[VALUE_HUMIDITY];
-    arr_indx[2] = sensor[sindx].value_indx[VALUE_BAT];
-
-    sprintf(buff,"%s: %0.1fC, Min: %0.1fC, Max: %0.1fC, Avg: %0.1fC, Nbr: %d, Hum: %0.1f, Bat: %0.1fV",
-        sensor[sindx].label,
-        value_array[arr_indx[0]].last,
-        value_array[arr_indx[0]].min,
-        value_array[arr_indx[0]].max,
-        value_array[arr_indx[0]].average,
-        value_array[arr_indx[0]].daily_cntr,
-        value_array[arr_indx[1]].last,
-        value_array[arr_indx[2]].last
-    );
-    Serial.println(buff);
-    lte_send_msg(lte_get_sender_nbr(), buff);
-}
-
-void safe_append(char *dst, size_t dst_size,  const char *src)
-{
-    size_t len_dst = strnlen(dst, dst_size);
-    size_t len_src = strnlen(src, dst_size);
-
-    if (len_dst + len_src + 1 > dst_size) {
-        // Not enough space — truncate safely
-        size_t copy_len = dst_size - len_dst - 1;
-        memcpy(dst + len_dst, src, copy_len);
-        dst[dst_size - 1] = '\0';
-        return;
-    }
-
-    memcpy(dst + len_dst, src, len_src);
-    dst[len_dst + len_src] = '\0';
-}
-
-#define ONE_SENSOR_LEN  32
-void msg_send_all_temp(void)
-{
-    char    buff[SMS_LEN] = {0};
-    char    one_buff[ONE_SENSOR_LEN];
-
-    for(uint8_t sindx = SENSOR_UNDEFINED + 1; sindx < SENSOR_NBR_OF; sindx++)
-    {
-        sprintf(one_buff,"%s: %0.1fC,",
-            sensor[sindx].label,
-            value_array[sensor[sindx].value_indx[VALUE_TEMPERATURE]].last
-        );       
-        safe_append(buff, SMS_LEN, one_buff);
-    }
-
-    Serial.println(buff);
-    lte_send_msg(lte_get_sender_nbr(), buff);
-}
-
-
 
 void msg_process_sms_cmd(void)
 {
     int cmd_indx = -1; 
     int16_t param;
-    char    buff[SMS_LEN];
+    char    buff[ R69_MSG_SIZE];
 
     Serial.println("msg_process_sms_cmd");
     for(uint8_t i = 0; ((i < SMS_CMD_NBR_OF) && (cmd_indx == -1)); i++)
@@ -287,28 +230,24 @@ void msg_process_sms_cmd(void)
                 break;
             case SMS_CMD_RELAY_PUMP:
                 sprintf(buff,"<R;RANTA;%s;PUMP;%d>", main_ctrl.my_addr, param);
-                //r69_send(buff);
+                r69_send(buff);
                 Serial.println(buff);
                 break;
             case SMS_CMD_RELAY_PEER:
                 sprintf(buff,"<R;RANTA;%s;PEER;%d>", main_ctrl.my_addr, param);
-                //r69_send(buff);
+                r69_send(buff);
                 Serial.println(buff);
                 break;
             case SMS_CMD_SENSOR_PIHA1:
-                sprintf(buff,"<S;#;PIHA1;T;-12.3;H;44;L;2344>");
+                sprintf(buff,"<S;PIHA1;T;-12.3;H;44;L;2344>");
                 Serial.println(buff);
                 break;
             case SMS_CMD_SENSOR_REPO1:
                 msg_send_repo1();
                 break;
             case SMS_CMD_SENSOR_REPO2:
-                msg_send_ruuvi_repo(SENSOR_PARVEKE);
-                //Serial.println(buff);
-                break;
-            case SMS_CMD_ALL_TEMPERATURE:
-                msg_send_all_temp();
-                //Serial.println(buff);
+                sprintf(buff,"<S;REPO2;T;22.3;W;13.4;l;876>");
+                Serial.println(buff);
                 break;
             default:
                 break;
@@ -414,8 +353,8 @@ test_msg_st test[TEST_MSG_NBR_OF] =
       {MSG_FROM_SMS, "PUMP;100"},
       {MSG_FROM_SMS, "PUMP;0"},
       {MSG_FROM_RFM, "\r\n<S;#;PIHA1;T;-12.3;H;44;L;2344>"},
-      {MSG_FROM_RFM, "<S;#;RANTA;T;22.3;W;13.4;l;876>\n"},
-      {MSG_FROM_RFM, "{A;#;PIHA2;PIR1;1;PIR2;0}"},
+      {MSG_FROM_RFM, "<S;RANTA;T;22.3;W;13.4;l;876>\n"},
+      {MSG_FROM_RFM, "{A;PIHA2;PIR1;1;PIR2;0}"},
       {MSG_FROM_RFM, "<A#TK1OVI1;>"},
       {MSG_FROM_RFM, "<A;#;TK1;OVI1;?>"}
 };

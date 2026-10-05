@@ -1,8 +1,9 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
+#include <Arduino.h>
 #include "WString.h"
 #include <time.h>
-#define   __APP__ ((char*)"T2606_LTE_RFM_GW_Quad")
+#define   __APP__ ((char*)"T2610-Ruuvi-RFM69-GW")
 
 #define  MY_ADDR_LEN    8
 
@@ -12,26 +13,13 @@
 // #define VILLA_ASTRID
 
 // HW Definitions
-//#define MCU_PICO_PLUS_2
+#define MCU_PICO_PLUS_2
 
 #define DEBUG_PRINT 
 #define SEND_TEST_MSG 
-#define T2601_PICO_RFM69
-#include <Arduino.h>
+#define T2610_RUUVI_RFM69_GW
 
-#ifdef  ADA_M0_RFM69
-#define SerialX  Serial1
-#else
-#define SerialX Serial
-#endif
-
-
-// HW Definitions
-#define MCU_PICO_PLUS_2
-
-//#define TASK_NBR_OF  3
-//#define LED_INDICATION
-
+#define UART_MSG_LEN    80
 #define MY_MODULE_TAG   'R'
 #define MY_MODULE_ADDR  '1'
 

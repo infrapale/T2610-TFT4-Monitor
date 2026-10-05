@@ -30,12 +30,12 @@
 #include "main.h"
 #include "sensor.h"
 #include "msg.h"
-#include "r69.h"
+
 #include "atask.h"
 
 
 extern msg_st msg;
-extern r69_st r69;
+//extern r69_st r69;
 
 sensor_value_st value_array[30] = {0};
 

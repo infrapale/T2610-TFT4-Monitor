@@ -18,8 +18,12 @@ void setup() {
     Serial1.setTX(PIN_TX0);   
     Serial1.setRX(PIN_RX0);
 
+    Serial2.setTX(PIN_TX1);   
+    Serial2.setRX(PIN_RX1);
+
     Serial.begin(115200);
-    Serial1.begin(9600);
+    Serial1.begin(115200);
+    Serial2.begin(9600);
     delay(2000);
 
     atask_initialize();
@@ -29,6 +33,7 @@ void setup() {
 }
 
 uint8_t rx_pos = 0;
+uint8_t rfm_pos = 0;
 uint32_t rx_timeout;
 
 
@@ -53,6 +58,30 @@ void loop() {
             }
         }
     }
+
+    while (SerialRfm.available()) {
+        char c = SerialRfm.read();
+
+        //Serial.printf("@%d-%c\n",rfm_pos,c);
+        if (c == '\n' || c == '\r') {
+            if (rfm_pos > 0) {
+                msg.rfm[rfm_pos] = 0;
+                //msg.rx_msg_avail = true;   // signal to msg_task()
+                Serial.println(msg.rfm);
+                rfm_pos = 0;
+            }
+        } else {
+            if (rfm_pos < MSG_MAX_RFM_MSG_LEN - 1) {
+                msg.rfm[rfm_pos++] = c;
+            } else {
+                // overflow protection
+                msg.rfm[MSG_MAX_RFM_MSG_LEN - 1] = 0;
+                rfm_pos = 0;
+            }
+        }
+    }
+
+
 
     // --- RUN SCHEDULER ---
     atask_run();   // or whatever your scheduler call is
