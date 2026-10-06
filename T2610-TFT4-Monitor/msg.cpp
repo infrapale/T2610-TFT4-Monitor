@@ -16,17 +16,6 @@ extern main_ctrl_st main_ctrl;
 extern sensor_st sensor[SENSOR_NBR_OF];
 extern sensor_value_st value_array[];
 
-sms_cmd_st sms_cmd[SMS_CMD_NBR_OF] =
-{
-    {"HOME",    SMS_CMD_HOME},
-    {"PUMP",    SMS_CMD_RELAY_PUMP},
-    {"PEER",    SMS_CMD_RELAY_PEER},
-    {"PIHA1",   SMS_CMD_SENSOR_PIHA1},
-    {"REPO1",   SMS_CMD_SENSOR_REPO1},
-    {"REPO2",   SMS_CMD_SENSOR_REPO2},
-    {"TEMP",    SMS_CMD_ALL_TEMPERATURE},
-
-};
 
 void msg_task(void);
 //                                  123456789012345   ival  next  state  prev  cntr flag  call backup
@@ -51,33 +40,32 @@ bool msg_is_valid_char(char c) {
     return false;
 }
 
-int msg_strip_to_raw(char *msg_inp)
+int msg_strip_to_raw(msg_st *msg)
 {
-    int len = strlen(msg_inp);
+    int len = strlen(msg->buff);
     // Serial.printf("len1: %d ",len);
     if(len == 0 ) return 0;
     int indx = len-1;
-    while(msg_inp[indx] == '\n' || msg_inp[indx] == '\r'){
-        msg_inp[indx--] = 0x00;
+    while(msg->buff[indx] == '\n' || msg->buff[indx] == '\r'){
+        msg->buff[indx--] = 0x00;
         if(indx < 3) break;
     }
-    len = strlen(msg_inp);
+    len = strlen(msg->buff);
     int i = 0;
-    while(msg_inp[i] == '\n' || msg_inp[i] == '\r'){
+    while(msg->buff[i] == '\n' || msg->buff[i] == '\r'){
         i++;
         if(i > len -3) break;
     }
     len -= i;
-    strncpy(msg.raw, &msg_inp[i],MSG_MAX_RAW_MSG_LEN);
     return len;
 }
 
-uint8_t msg_split(char *msg_inp,  char separator = ';') 
+uint8_t msg_split(msg_st *msg,  char separator = ';') 
 {
     // Serial.print("sg_split() ");
     // Must start with '<' and end with '>'
 
-    int len = msg_strip_to_raw(msg_inp);
+    int len = msg_strip_to_raw(msg);
     // Serial.printf("len1: %d ",len);
     if(len < 3) return 0;
     
@@ -87,20 +75,20 @@ uint8_t msg_split(char *msg_inp,  char separator = ';')
 
     // Serial.printf("len3: %d ",len);
     // Serial.printf("Start - End: %c %c ",raw_msg[i], raw_msg[len - 1] );
-    if (len < 2 || msg.raw[i] != '<' || msg.raw[len - 1] != '>') return 0;
+    if (len < 2 || msg->buff[i] != '<' || msg->buff[len - 1] != '>') return 0;
     i++;
     while (i < len - 1 && f < MSG_MAX_FIELDS) {
-        char c = msg.raw[i];
+        char c = msg->buff[i];
 
         if (c == separator) {
             // End of field
-            msg.fields[f][p] = '\0';
+            msg->field[f][p] = '\0';
             f++;
             p = 0;
         }
         else {
             if (p < MSG_MAX_FIELD_LEN - 1) {
-                msg.fields[f][p++] = c;
+                msg->field[f][p++] = c;
             }
         }
         i++;
@@ -108,20 +96,20 @@ uint8_t msg_split(char *msg_inp,  char separator = ';')
 
     // Final field
     if (f < MSG_MAX_FIELDS) {
-        msg.fields[f][p] = '\0';
+        msg->field[f][p] = '\0';
         f++;
     }
 
     // Serial.printf("..end return %d\n",f);
-    msg.field_count = f;
+    msg->field_count = f;
     return f;
 }
 
-void msg_sub_print(void)
+void msg_sub_print(msg_st *msg)
 {
-    Serial.printf("Message fields; %d\n", msg.field_count);
-    for (uint8_t i = 0; i < msg.field_count; i++) {
-        Serial.printf("[%d] = %s\n", i, msg.fields[i]);
+    Serial.printf("Message fields; %d\n", msg->field_count);
+    for (uint8_t i = 0; i < msg->field_count; i++) {
+        Serial.printf("[%d] = %s\n", i, msg->field[i]);
     }
 }
 
@@ -170,153 +158,60 @@ uint32_t msg_robust_atoi(const char *s, uint8_t *err_cntr, int min, int max)
 }
 
 
-size_t msg_set_sms_string(char *sms_str)
-{
-    str_to_upper(sms_str);
-    Serial.printf("msg_set_sms_string: %s\n", sms_str);
-    msg.raw[0] = '<';
-    strncpy(&msg.raw[1],sms_str, MSG_MAX_RAW_MSG_LEN-1);
-    size_t len = strnlen(msg.raw,MSG_MAX_RAW_MSG_LEN);
-    msg.raw[len++] = '>';
-    msg.raw[len++] = 0x00;
-    msg_split(msg.raw, ' ');
-    Serial.printf(" ... %s\n", msg.raw);
-    // msg_sub_print();
-    return len;
-} 
 
-void msg_send_repo1(void)
-{
-    char    buff[SMS_LEN];
-    uint8_t arr_indx[4]; 
-    arr_indx[0] = sensor[SENSOR_KHH].value_indx[VALUE_TEMPERATURE];
-    arr_indx[1] = sensor[SENSOR_KHH].value_indx[VALUE_HUMIDITY];
+// void xx_msg_process_sms_cmd(void)
+// {
+//     int cmd_indx = -1; 
+//     int16_t param;
+//     char    buff[SMS_LEN];
 
-    sprintf(buff,"KHH: %0.1fC, Min: %0.1fC, Max: %0.1fC, Avg: %0.1fC, Nbr: %d, Hum: %d%",
-        value_array[arr_indx[0]].last,
-        value_array[arr_indx[0]].min,
-        value_array[arr_indx[0]].max,
-        value_array[arr_indx[0]].average,
-        value_array[arr_indx[0]].daily_cntr,
-        value_array[arr_indx[1]].last
-    );
-    Serial.println(buff);
-    // lte_send_msg(lte_get_sender_nbr(), buff);
-}
+//     Serial.println("msg_process_sms_cmd");
+//     for(uint8_t i = 0; ((i < SMS_CMD_NBR_OF) && (cmd_indx == -1)); i++)
+//     {
+//         if(strncmp(msg.fields[0], sms_cmd[i].cmd, MSG_MAX_SMS_CMD_LEN) == 0) cmd_indx = i;
+//         Serial.printf("sms %s - %s: %d\n", msg.fields[0], sms_cmd[i].cmd, cmd_indx);
+//     }
+//     Serial.printf("cmd_indx= %d\n", cmd_indx);
 
-void msg_send_ruuvi_repo(uint8_t sindx)
-{
-    char    buff[SMS_LEN];
-    uint8_t arr_indx[4]; 
-    arr_indx[0] = sensor[sindx].value_indx[VALUE_TEMPERATURE];
-    arr_indx[1] = sensor[sindx].value_indx[VALUE_HUMIDITY];
-    arr_indx[2] = sensor[sindx].value_indx[VALUE_BAT];
+//     if (cmd_indx != -1)
+//     {
+//         param = atoi(msg.fields[1]);
+//         switch(cmd_indx)
+//         {
+//             case SMS_CMD_HOME:
+//                 break;
+//             case SMS_CMD_RELAY_PUMP:
+//                 sprintf(buff,"<R;RANTA;%s;PUMP;%d>", main_ctrl.my_addr, param);
+//                 //r69_send(buff);
+//                 Serial.println(buff);
+//                 break;
+//             case SMS_CMD_RELAY_PEER:
+//                 sprintf(buff,"<R;RANTA;%s;PEER;%d>", main_ctrl.my_addr, param);
+//                 //r69_send(buff);
+//                 Serial.println(buff);
+//                 break;
+//             case SMS_CMD_SENSOR_PIHA1:
+//                 sprintf(buff,"<S;#;PIHA1;T;-12.3;H;44;L;2344>");
+//                 Serial.println(buff);
+//                 break;
+//             case SMS_CMD_SENSOR_REPO1:
+//                 msg_send_repo1();
+//                 break;
+//             case SMS_CMD_SENSOR_REPO2:
+//                 msg_send_ruuvi_repo(SENSOR_PARVEKE);
+//                 //Serial.println(buff);
+//                 break;
+//             case SMS_CMD_ALL_TEMPERATURE:
+//                 msg_send_all_temp();
+//                 //Serial.println(buff);
+//                 break;
+//             default:
+//                 break;
+//         }
 
-    sprintf(buff,"%s: %0.1fC, Min: %0.1fC, Max: %0.1fC, Avg: %0.1fC, Nbr: %d, Hum: %0.1f, Bat: %0.1fV",
-        sensor[sindx].label,
-        value_array[arr_indx[0]].last,
-        value_array[arr_indx[0]].min,
-        value_array[arr_indx[0]].max,
-        value_array[arr_indx[0]].average,
-        value_array[arr_indx[0]].daily_cntr,
-        value_array[arr_indx[1]].last,
-        value_array[arr_indx[2]].last
-    );
-    Serial.println(buff);
-    lte_send_msg(lte_get_sender_nbr(), buff);
-}
+//     }
 
-void safe_append(char *dst, size_t dst_size,  const char *src)
-{
-    size_t len_dst = strnlen(dst, dst_size);
-    size_t len_src = strnlen(src, dst_size);
-
-    if (len_dst + len_src + 1 > dst_size) {
-        // Not enough space — truncate safely
-        size_t copy_len = dst_size - len_dst - 1;
-        memcpy(dst + len_dst, src, copy_len);
-        dst[dst_size - 1] = '\0';
-        return;
-    }
-
-    memcpy(dst + len_dst, src, len_src);
-    dst[len_dst + len_src] = '\0';
-}
-
-#define ONE_SENSOR_LEN  32
-void msg_send_all_temp(void)
-{
-    char    buff[SMS_LEN] = {0};
-    char    one_buff[ONE_SENSOR_LEN];
-
-    for(uint8_t sindx = SENSOR_UNDEFINED + 1; sindx < SENSOR_NBR_OF; sindx++)
-    {
-        sprintf(one_buff,"%s: %0.1fC,",
-            sensor[sindx].label,
-            value_array[sensor[sindx].value_indx[VALUE_TEMPERATURE]].last
-        );       
-        safe_append(buff, SMS_LEN, one_buff);
-    }
-
-    Serial.println(buff);
-    lte_send_msg(lte_get_sender_nbr(), buff);
-}
-
-
-
-void msg_process_sms_cmd(void)
-{
-    int cmd_indx = -1; 
-    int16_t param;
-    char    buff[SMS_LEN];
-
-    Serial.println("msg_process_sms_cmd");
-    for(uint8_t i = 0; ((i < SMS_CMD_NBR_OF) && (cmd_indx == -1)); i++)
-    {
-        if(strncmp(msg.fields[0], sms_cmd[i].cmd, MSG_MAX_SMS_CMD_LEN) == 0) cmd_indx = i;
-        Serial.printf("sms %s - %s: %d\n", msg.fields[0], sms_cmd[i].cmd, cmd_indx);
-    }
-    Serial.printf("cmd_indx= %d\n", cmd_indx);
-
-    if (cmd_indx != -1)
-    {
-        param = atoi(msg.fields[1]);
-        switch(cmd_indx)
-        {
-            case SMS_CMD_HOME:
-                break;
-            case SMS_CMD_RELAY_PUMP:
-                sprintf(buff,"<R;RANTA;%s;PUMP;%d>", main_ctrl.my_addr, param);
-                //r69_send(buff);
-                Serial.println(buff);
-                break;
-            case SMS_CMD_RELAY_PEER:
-                sprintf(buff,"<R;RANTA;%s;PEER;%d>", main_ctrl.my_addr, param);
-                //r69_send(buff);
-                Serial.println(buff);
-                break;
-            case SMS_CMD_SENSOR_PIHA1:
-                sprintf(buff,"<S;#;PIHA1;T;-12.3;H;44;L;2344>");
-                Serial.println(buff);
-                break;
-            case SMS_CMD_SENSOR_REPO1:
-                msg_send_repo1();
-                break;
-            case SMS_CMD_SENSOR_REPO2:
-                msg_send_ruuvi_repo(SENSOR_PARVEKE);
-                //Serial.println(buff);
-                break;
-            case SMS_CMD_ALL_TEMPERATURE:
-                msg_send_all_temp();
-                //Serial.println(buff);
-                break;
-            default:
-                break;
-        }
-
-    }
-
-}
+// }
 
 void  msg_time_action(void)
 {
@@ -340,58 +235,58 @@ void  msg_time_action(void)
     clock_set_date_time();
 }
 
-void msg_process(msg_from_et from, char *raw_msg )
-{
-    //Serial.printf("Message1 %d: %s\n", from, raw_msg);
+// void xxmsg_process(msg_from_et from, char *raw_msg )
+// {
+//     //Serial.printf("Message1 %d: %s\n", from, raw_msg);
 
-    msg.from = from;
-    switch(from) 
-    {
-        case MSG_FROM_UART:
-            strncpy(msg.raw, raw_msg, MSG_MAX_RAW_MSG_LEN);
-            break;
-        case MSG_FROM_RFM:
-            strncpy(msg.raw, raw_msg, MSG_MAX_RAW_MSG_LEN);
-            break;
-        case MSG_FROM_SMS:
-             msg_set_sms_string(raw_msg);
-            break;
-    } 
-    //Serial.printf("Message2 %d: %s\n", from, msg.raw);
+//     msg.from = from;
+//     switch(from) 
+//     {
+//         case MSG_FROM_UART:
+//             strncpy(msg.raw, raw_msg, MSG_MAX_RAW_MSG_LEN);
+//             break;
+//         case MSG_FROM_RFM:
+//             strncpy(msg.raw, raw_msg, MSG_MAX_RAW_MSG_LEN);
+//             break;
+//         case MSG_FROM_SMS:
+//              msg_set_sms_string(raw_msg);
+//             break;
+//     } 
+//     //Serial.printf("Message2 %d: %s\n", from, msg.raw);
 
-    msg.field_count = msg_split(msg.raw);
-    // msg_sub_print();
-    switch(from)
-    {
-        case MSG_FROM_UART:
-            switch(msg.fields[0][0])
-            {
-                case 'R':
-                    msg_relay_action();
-                    break;
-                default:
-                    break;    
-            }
-            break;
-        case MSG_FROM_RFM:
-            switch(msg.fields[0][0])
-            {
-                case 'R':
-                    msg_relay_action();
-                    break;
-                case 'T':
-                    //msg_time_action();
-                    clock_set_date_time();
-                default:
-                    break;    
-            }
-            break;
-        case MSG_FROM_SMS:
-            msg_process_sms_cmd();
-            break;
-    }
+//     msg.field_count = msg_split(msg.raw);
+//     // msg_sub_print();
+//     switch(from)
+//     {
+//         case MSG_FROM_UART:
+//             switch(msg.fields[0][0])
+//             {
+//                 case 'R':
+//                     msg_relay_action();
+//                     break;
+//                 default:
+//                     break;    
+//             }
+//             break;
+//         case MSG_FROM_RFM:
+//             switch(msg.fields[0][0])
+//             {
+//                 case 'R':
+//                     msg_relay_action();
+//                     break;
+//                 case 'T':
+//                     //msg_time_action();
+//                     clock_set_date_time();
+//                 default:
+//                     break;    
+//             }
+//             break;
+//         case MSG_FROM_SMS:
+//             msg_process_sms_cmd();
+//             break;
+//     }
 
-}
+// }
 
 //     MH11 1      Turn on MH1-1                 RFM: <R;MH1;MH11;1>
 //     PUMP 0      Turn off the pump:            RFM: <R;Dock;PUMP;0> 
@@ -425,7 +320,7 @@ void msg_mod_test(void)
     Serial.println("msg.cpp module tests:");
     for(uint8_t i = 0; i < TEST_MSG_NBR_OF; i++)
     {
-        msg_process(test[i].from, test[i].msg);
+        //msg_process(test[i].from, test[i].msg);
     }
 }
 
@@ -433,7 +328,7 @@ void msg_task(void)
 {
     static uint8_t indx = 0;
 
-    msg_process(test[indx].from, test[indx].msg);
+    //msg_process(test[indx].from, test[indx].msg);
     indx++;
     if(indx >= TEST_MSG_NBR_OF) indx = 0;
 

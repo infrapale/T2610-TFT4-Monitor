@@ -30,12 +30,12 @@
 #include "main.h"
 #include "sensor.h"
 #include "msg.h"
+#include "rfm.h"
 
 #include "atask.h"
 
 
-extern msg_st msg;
-//extern r69_st r69;
+extern rfm_st rfm;
 
 sensor_value_st value_array[30] = {0};
 
@@ -213,17 +213,17 @@ uint8_t sensor_save_values(uint8_t sindx)
     bool    do_continue = true;
     uint8_t saved_values = 0;
 
-    while ((findx < msg.field_count-1) && do_continue)
+    while ((findx < rfm.rx.field_count-1) && do_continue)
     {
         char *end;
-        float fval = strtof(msg.fields[findx+1], &end);
-        if ((end == msg.fields[findx+1]) || (*end != '\0'))
+        float fval = strtof(rfm.rx.field[findx+1], &end);
+        if ((end == rfm.rx.field[findx+1]) || (*end != '\0'))
         {
             do_continue = false;
         }
         else
         {
-            switch(msg.fields[findx][0])
+            switch(rfm.rx.field[findx][0])
             {
                 case VALUE_TAG_TEMP:
                     sensor_store_value(sindx, VALUE_TEMPERATURE, fval);
@@ -255,7 +255,6 @@ uint8_t sensor_save_values(uint8_t sindx)
     }
     //sensor_print(sindx);
     sensor[sindx].updated = true;
-
     return saved_values;
 
 } 
@@ -267,10 +266,10 @@ void sensor_process_msg(uint8_t  nbr_fields)
     // Serial.printf("Split nbr %d\n",nbr_fields);
     // msg_sub_print();
 
-    switch(msg.fields[0][0])
+    switch(rfm.rx.field[0][0])
     {
         case 'S':
-            sindx = sensor_find_label(msg.fields[1]);
+            sindx = sensor_find_label(rfm.rx.field[1]);
             switch(sindx)
             {
                 case SENSOR_UNDEFINED:

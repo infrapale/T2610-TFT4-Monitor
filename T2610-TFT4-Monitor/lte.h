@@ -9,6 +9,7 @@
 
 #include <Arduino.h>
 #include "io.h"
+#include "msg.h"
 
 
 #define LteSerial Serial1
@@ -68,7 +69,18 @@ typedef struct
     char name[32];
 } contact_st;
 
+
+
+typedef struct
+{
+    char cmd[MSG_MAX_SMS_CMD_LEN];
+    sms_cmd_type_et type;
+} sms_cmd_st;
+
+
 void lte_initialize(void);
+
+void lte_fast_read(void);
 
 uint16_t lte_read_line(char *lp, uint16_t max_len, uint32_t timeout);
 

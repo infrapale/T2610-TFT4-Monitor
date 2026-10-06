@@ -5,6 +5,8 @@
 #include    "atask.h"
 #include    "lte.h"
 #include    "msg.h"
+#include    "rfm.h"
+#include    "sensor.h"
 
 typedef struct
 {
@@ -20,7 +22,25 @@ typedef struct
 
 lte_st lte ={0};
 
-lte_msg_st lte_msg;
+lte_msg_st lte_msg ={};
+
+extern main_ctrl_st main_ctrl;
+extern rfm_st rfm;
+extern sensor_st sensor[SENSOR_NBR_OF];
+extern sensor_value_st value_array[];
+
+
+sms_cmd_st sms_cmd[SMS_CMD_NBR_OF] =
+{
+    {"HOME",    SMS_CMD_HOME},
+    {"PUMP",    SMS_CMD_RELAY_PUMP},
+    {"PEER",    SMS_CMD_RELAY_PEER},
+    {"PIHA1",   SMS_CMD_SENSOR_PIHA1},
+    {"REPO1",   SMS_CMD_SENSOR_REPO1},
+    {"REPO2",   SMS_CMD_SENSOR_REPO2},
+    {"TEMP",    SMS_CMD_ALL_TEMPERATURE},
+};
+
 
 contact_st contact_list[NAME_NBR_OF] =
 {
@@ -43,7 +63,16 @@ void lte_initialize(void)
     lte.task_indx =  atask_add_new(&lte_th);
 }
 
-
+void lte_fast_read(void)
+{
+    // if (!lte_msg.available){
+    if (LteSerial.available()){
+        uint16_t len = lte_read_line(lte_msg.message, MSG_LEN, 1000);
+        if (len > 0){
+            Serial.printf("Message len: %d body: %s\n", len, lte_msg.body);
+        }
+    }
+}
 
 uint16_t lte_read_line(char *lp, uint16_t max_len, uint32_t timeout = 1000)
 {
@@ -341,6 +370,160 @@ void lte_setup() {
 }
 
 
+
+size_t lte_set_sms_string(char *sms_str, msg_st *msg)
+{
+    str_to_upper(sms_str);
+    Serial.printf("msg_set_sms_string: %s\n", sms_str);
+    msg->buff[0] = '<';
+    strncpy(&msg->buff[1],sms_str, MSG_MAX_RAW_MSG_LEN-1);
+    size_t len = strnlen(msg->buff,MSG_MAX_RAW_MSG_LEN);
+    msg->buff[len++] = '>';
+    msg->buff[len++] = 0x00;
+    msg_split(msg, ' ');
+    Serial.printf(" ... %s\n", msg->buff);
+    // msg_sub_print();
+    return len;
+} 
+
+
+
+void msg_send_repo1(void)
+{
+    char    buff[SMS_LEN];
+    uint8_t arr_indx[4]; 
+    arr_indx[0] = sensor[SENSOR_KHH].value_indx[VALUE_TEMPERATURE];
+    arr_indx[1] = sensor[SENSOR_KHH].value_indx[VALUE_HUMIDITY];
+
+    sprintf(buff,"KHH: %0.1fC, Min: %0.1fC, Max: %0.1fC, Avg: %0.1fC, Nbr: %d, Hum: %d%",
+        value_array[arr_indx[0]].last,
+        value_array[arr_indx[0]].min,
+        value_array[arr_indx[0]].max,
+        value_array[arr_indx[0]].average,
+        value_array[arr_indx[0]].daily_cntr,
+        value_array[arr_indx[1]].last
+    );
+    Serial.println(buff);
+    // lte_send_msg(lte_get_sender_nbr(), buff);
+}
+
+void msg_send_ruuvi_repo(uint8_t sindx)
+{
+    char    buff[SMS_LEN];
+    uint8_t arr_indx[4]; 
+    arr_indx[0] = sensor[sindx].value_indx[VALUE_TEMPERATURE];
+    arr_indx[1] = sensor[sindx].value_indx[VALUE_HUMIDITY];
+    arr_indx[2] = sensor[sindx].value_indx[VALUE_BAT];
+
+    sprintf(buff,"%s: %0.1fC, Min: %0.1fC, Max: %0.1fC, Avg: %0.1fC, Nbr: %d, Hum: %0.1f, Bat: %0.1fV",
+        sensor[sindx].label,
+        value_array[arr_indx[0]].last,
+        value_array[arr_indx[0]].min,
+        value_array[arr_indx[0]].max,
+        value_array[arr_indx[0]].average,
+        value_array[arr_indx[0]].daily_cntr,
+        value_array[arr_indx[1]].last,
+        value_array[arr_indx[2]].last
+    );
+    Serial.println(buff);
+    lte_send_msg(lte_get_sender_nbr(), buff);
+}
+
+void safe_append(char *dst, size_t dst_size,  const char *src)
+{
+    size_t len_dst = strnlen(dst, dst_size);
+    size_t len_src = strnlen(src, dst_size);
+
+    if (len_dst + len_src + 1 > dst_size) {
+        // Not enough space — truncate safely
+        size_t copy_len = dst_size - len_dst - 1;
+        memcpy(dst + len_dst, src, copy_len);
+        dst[dst_size - 1] = '\0';
+        return;
+    }
+
+    memcpy(dst + len_dst, src, len_src);
+    dst[len_dst + len_src] = '\0';
+}
+
+#define ONE_SENSOR_LEN  32
+void msg_send_all_temp(void)
+{
+    char    buff[SMS_LEN] = {0};
+    char    one_buff[ONE_SENSOR_LEN];
+
+    for(uint8_t sindx = SENSOR_UNDEFINED + 1; sindx < SENSOR_NBR_OF; sindx++)
+    {
+        sprintf(one_buff,"%s: %0.1fC,",
+            sensor[sindx].label,
+            value_array[sensor[sindx].value_indx[VALUE_TEMPERATURE]].last
+        );       
+        safe_append(buff, SMS_LEN, one_buff);
+    }
+
+    Serial.println(buff);
+    lte_send_msg(lte_get_sender_nbr(), buff);
+}
+
+
+
+
+void lte_process_sms_cmd(msg_st *msg)
+{
+    int cmd_indx = -1; 
+    int16_t param;
+    char    buff[SMS_LEN];
+
+    Serial.println("msg_process_sms_cmd");
+    for(uint8_t i = 0; ((i < SMS_CMD_NBR_OF) && (cmd_indx == -1)); i++)
+    {
+        if(strncmp(msg->field[0], sms_cmd[i].cmd, MSG_MAX_SMS_CMD_LEN) == 0) cmd_indx = i;
+        Serial.printf("sms %s - %s: %d\n", msg->field[0], sms_cmd[i].cmd, cmd_indx);
+    }
+    Serial.printf("cmd_indx= %d\n", cmd_indx);
+
+    if (cmd_indx != -1)
+    {
+        param = atoi(msg->field[1]);
+        switch(cmd_indx)
+        {
+            case SMS_CMD_HOME:
+                break;
+            case SMS_CMD_RELAY_PUMP:
+                sprintf(buff,"<R;RANTA;%s;PUMP;%d>", main_ctrl.my_addr, param);
+                //r69_send(buff);
+                Serial.println(buff);
+                break;
+            case SMS_CMD_RELAY_PEER:
+                sprintf(buff,"<R;RANTA;%s;PEER;%d>", main_ctrl.my_addr, param);
+                //r69_send(buff);
+                Serial.println(buff);
+                break;
+            case SMS_CMD_SENSOR_PIHA1:
+                sprintf(buff,"<S;#;PIHA1;T;-12.3;H;44;L;2344>");
+                Serial.println(buff);
+                break;
+            case SMS_CMD_SENSOR_REPO1:
+                msg_send_repo1();
+                break;
+            case SMS_CMD_SENSOR_REPO2:
+                msg_send_ruuvi_repo(SENSOR_PARVEKE);
+                //Serial.println(buff);
+                break;
+            case SMS_CMD_ALL_TEMPERATURE:
+                msg_send_all_temp();
+                //Serial.println(buff);
+                break;
+            default:
+                break;
+        }
+
+    }
+
+}
+
+
+
 void lte_task(void)
 {
     static lte_msg_et header_status = LTE_MSG_UNDEF;
@@ -407,8 +590,8 @@ void lte_task(void)
             if (lte_parse_message()) {
                 lte_th.state = 120; 
                 lte_msg.complete = true;
-                msg_set_sms_string(lte_msg.body);
-                msg_process_sms_cmd();
+                lte_set_sms_string( lte_msg.body, &rfm.tx);
+                lte_process_sms_cmd(&rfm.tx);
 
             }
             else {

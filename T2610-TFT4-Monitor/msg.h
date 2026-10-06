@@ -30,39 +30,52 @@ typedef enum
 } sms_cmd_type_et;
 
 
+typedef struct
+{
+    char  field[MSG_MAX_FIELDS][MSG_MAX_FIELD_LEN];
+    uint8_t count;
+} fields_st;
 
 typedef struct 
 {
-    char        raw[MSG_MAX_RAW_MSG_LEN];
-    char        rfm[MSG_MAX_RFM_MSG_LEN];
-    msg_from_et from;
-    char        fields[MSG_MAX_FIELDS][MSG_MAX_FIELD_LEN];
+    char        buff[MSG_MAX_RAW_MSG_LEN];
+    uint16_t    pos;
+    uint8_t     from;
+    char        field[MSG_MAX_FIELDS][MSG_MAX_FIELD_LEN];
     uint8_t     field_count;
-    bool        rx_msg_avail;
+    bool        avail;
 } msg_st;
 
 
 
-typedef struct
-{
-    char cmd[MSG_MAX_SMS_CMD_LEN];
-    sms_cmd_type_et type;
-} sms_cmd_st;
+// typedef struct 
+// {
+//     char        raw[MSG_MAX_RAW_MSG_LEN];
+//     char        rfm[MSG_MAX_RFM_MSG_LEN];
+//     msg_from_et from;
+//     fields_et   fields;
+//     // char        fields[MSG_MAX_FIELDS][MSG_MAX_FIELD_LEN];
+//     // uint8_t     field_count;
+//     bool        rx_msg_avail;
+// } msg_st;
+
 
 
 void msg_initialize(void);
+
+void str_to_upper(char str[]);
 
 bool msg_is_valid_char(char c);
 
 uint32_t msg_robust_atoi(const char *s, uint8_t *err_cntr, int min, int max );
 
-uint8_t msg_split(char *msg_inp,  char separator ); 
+uint8_t msg_split(msg_st *msg,  char separator);
 
 size_t msg_set_sms_string(char *sms_str);
 
 void msg_process_sms_cmd(void);
 
-void msg_process(msg_from_et from, char *raw_msg );
+void msg_process(msg_from_et from, msg_st *msg);
 
 void msg_sub_print(void);
 
