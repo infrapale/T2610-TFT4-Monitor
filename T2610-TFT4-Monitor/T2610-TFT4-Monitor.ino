@@ -7,6 +7,7 @@
 #include    "sensor.h"
 #include    "rfm.h"
 #include    "super.h"
+#include    "box.h"
 
 #define BUFF_LEN   160
 char mbuff[BUFF_LEN];
@@ -43,6 +44,13 @@ void setup() {
     msg_initialize();
     rfm_initialize();
     Serial.println("Hello");
+
+    box_run_tft_pin_check();
+    box_initialize();
+    box_structure_print();
+    // dingdong_initialize();
+    // dingdong_play_all();
+
 }
 
 uint8_t rx_pos = 0;

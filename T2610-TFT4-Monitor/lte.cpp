@@ -537,7 +537,7 @@ void lte_task(void)
             lte.wait_until = millis() + 3200;
             Serial.println("=== Pico 2 W + A7683E SMS Framework ===");
 
-            io_led_flash(LED_BLUE, BLINK_JITTER_1, 40);            
+            io_led_flash(LED_INDX_YELLOW, BLINK_JITTER_1, 40);            
             break;
         case 10:
             Serial.println("[ACTION] Resetting modem…");
@@ -580,7 +580,7 @@ void lte_task(void)
             break;
         case 100:
             if (lte_msg.available){
-                io_led_flash(LED_BLUE, BLINK_NORMAL, 80); 
+                io_led_flash(LED_INDX_YELLOW, BLINK_NORMAL, 80); 
                 lte_th.state = 110; 
             } 
             break;
@@ -596,7 +596,7 @@ void lte_task(void)
             }
             else {
                 Serial.println("Incorrect message");
-                io_led_flash(LED_RED, BLINK_JITTER_1, 100); 
+                io_led_flash(LED_INDX_YELLOW, BLINK_SOS, 100); 
                 lte_clear_msg(&lte_msg);
                 lte_msg.available = false;
                 lte_th.state = 100;

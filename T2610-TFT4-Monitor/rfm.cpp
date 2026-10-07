@@ -8,7 +8,7 @@
 #include "rfm.h"
 #include "lte.h"
 #include "atask.h"
-// #include "sensor.h"
+#include "sensor.h"
 // #include "clock.h"
 
 void rfm_rx_task(void);
@@ -32,6 +32,7 @@ void rfm_rx_task(void)
             break;
         case 5:
             rfm.rx.pos = 0;
+            rfm.rx.avail = false;
             rfm_rx_th.state = 10;
             break;
         case 10:
@@ -41,7 +42,7 @@ void rfm_rx_task(void)
                 if (c == '\n' || c == '\r') {
                     if (rfm.rx.pos > 0) {
                         rfm.rx.buff[rfm.rx.pos] = 0;
-                        //msg.rx_msg_avail = true;   // signal to msg_task()
+                        rfm.rx.avail = true;   // signal to msg_task()
                         rfm_rx_th.state = 20;
                     }
                 } else {
@@ -57,7 +58,8 @@ void rfm_rx_task(void)
             break;
         case 20:
             Serial.println(rfm.rx.buff);
-            msg_split(&rfm.rx, ';');
+            rfm.rx.field_count = msg_split(&rfm.rx, ';');
+            sensor_process_msg(rfm.rx.field_count);
             rfm_rx_th.state = 5;
             break;
         case 100:

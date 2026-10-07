@@ -28,8 +28,7 @@ void msg_mod_test(void);
 
 void msg_initialize(void)
 {
-  //msg_mod_test();
-  // atask_add_new(&msg_th);
+    // atask_add_new(&msg_th);
 }
 
 bool msg_is_valid_char(char c) {
@@ -159,59 +158,7 @@ uint32_t msg_robust_atoi(const char *s, uint8_t *err_cntr, int min, int max)
 
 
 
-// void xx_msg_process_sms_cmd(void)
-// {
-//     int cmd_indx = -1; 
-//     int16_t param;
-//     char    buff[SMS_LEN];
 
-//     Serial.println("msg_process_sms_cmd");
-//     for(uint8_t i = 0; ((i < SMS_CMD_NBR_OF) && (cmd_indx == -1)); i++)
-//     {
-//         if(strncmp(msg.fields[0], sms_cmd[i].cmd, MSG_MAX_SMS_CMD_LEN) == 0) cmd_indx = i;
-//         Serial.printf("sms %s - %s: %d\n", msg.fields[0], sms_cmd[i].cmd, cmd_indx);
-//     }
-//     Serial.printf("cmd_indx= %d\n", cmd_indx);
-
-//     if (cmd_indx != -1)
-//     {
-//         param = atoi(msg.fields[1]);
-//         switch(cmd_indx)
-//         {
-//             case SMS_CMD_HOME:
-//                 break;
-//             case SMS_CMD_RELAY_PUMP:
-//                 sprintf(buff,"<R;RANTA;%s;PUMP;%d>", main_ctrl.my_addr, param);
-//                 //r69_send(buff);
-//                 Serial.println(buff);
-//                 break;
-//             case SMS_CMD_RELAY_PEER:
-//                 sprintf(buff,"<R;RANTA;%s;PEER;%d>", main_ctrl.my_addr, param);
-//                 //r69_send(buff);
-//                 Serial.println(buff);
-//                 break;
-//             case SMS_CMD_SENSOR_PIHA1:
-//                 sprintf(buff,"<S;#;PIHA1;T;-12.3;H;44;L;2344>");
-//                 Serial.println(buff);
-//                 break;
-//             case SMS_CMD_SENSOR_REPO1:
-//                 msg_send_repo1();
-//                 break;
-//             case SMS_CMD_SENSOR_REPO2:
-//                 msg_send_ruuvi_repo(SENSOR_PARVEKE);
-//                 //Serial.println(buff);
-//                 break;
-//             case SMS_CMD_ALL_TEMPERATURE:
-//                 msg_send_all_temp();
-//                 //Serial.println(buff);
-//                 break;
-//             default:
-//                 break;
-//         }
-
-//     }
-
-// }
 
 void  msg_time_action(void)
 {
@@ -235,58 +182,7 @@ void  msg_time_action(void)
     clock_set_date_time();
 }
 
-// void xxmsg_process(msg_from_et from, char *raw_msg )
-// {
-//     //Serial.printf("Message1 %d: %s\n", from, raw_msg);
 
-//     msg.from = from;
-//     switch(from) 
-//     {
-//         case MSG_FROM_UART:
-//             strncpy(msg.raw, raw_msg, MSG_MAX_RAW_MSG_LEN);
-//             break;
-//         case MSG_FROM_RFM:
-//             strncpy(msg.raw, raw_msg, MSG_MAX_RAW_MSG_LEN);
-//             break;
-//         case MSG_FROM_SMS:
-//              msg_set_sms_string(raw_msg);
-//             break;
-//     } 
-//     //Serial.printf("Message2 %d: %s\n", from, msg.raw);
-
-//     msg.field_count = msg_split(msg.raw);
-//     // msg_sub_print();
-//     switch(from)
-//     {
-//         case MSG_FROM_UART:
-//             switch(msg.fields[0][0])
-//             {
-//                 case 'R':
-//                     msg_relay_action();
-//                     break;
-//                 default:
-//                     break;    
-//             }
-//             break;
-//         case MSG_FROM_RFM:
-//             switch(msg.fields[0][0])
-//             {
-//                 case 'R':
-//                     msg_relay_action();
-//                     break;
-//                 case 'T':
-//                     //msg_time_action();
-//                     clock_set_date_time();
-//                 default:
-//                     break;    
-//             }
-//             break;
-//         case MSG_FROM_SMS:
-//             msg_process_sms_cmd();
-//             break;
-//     }
-
-// }
 
 //     MH11 1      Turn on MH1-1                 RFM: <R;MH1;MH11;1>
 //     PUMP 0      Turn off the pump:            RFM: <R;Dock;PUMP;0> 
@@ -302,35 +198,9 @@ typedef struct
     char   msg[60];
 } test_msg_st;
 
-#define TEST_MSG_NBR_OF 8
-test_msg_st test[TEST_MSG_NBR_OF] =
-{
-      {MSG_FROM_SMS, "PUMP;1"},
-      {MSG_FROM_SMS, "PUMP;100"},
-      {MSG_FROM_SMS, "PUMP;0"},
-      {MSG_FROM_RFM, "\r\n<S;#;PIHA1;T;-12.3;H;44;L;2344>"},
-      {MSG_FROM_RFM, "<S;#;RANTA;T;22.3;W;13.4;l;876>\n"},
-      {MSG_FROM_RFM, "{A;#;PIHA2;PIR1;1;PIR2;0}"},
-      {MSG_FROM_RFM, "<A#TK1OVI1;>"},
-      {MSG_FROM_RFM, "<A;#;TK1;OVI1;?>"}
-};
 
-void msg_mod_test(void)
-{
-    Serial.println("msg.cpp module tests:");
-    for(uint8_t i = 0; i < TEST_MSG_NBR_OF; i++)
-    {
-        //msg_process(test[i].from, test[i].msg);
-    }
-}
 
 void msg_task(void)
 {
-    static uint8_t indx = 0;
-
     //msg_process(test[indx].from, test[indx].msg);
-    indx++;
-    if(indx >= TEST_MSG_NBR_OF) indx = 0;
-
-
 }

@@ -144,7 +144,7 @@ void sensor_print(uint8_t sindx)
 }
 
 
-uint8_t sensor_value_send(uint8_t sindx, uint8_t vindx)
+uint8_t sensor_value_print(uint8_t sindx, uint8_t vindx)
 {
     char buff[80] = {0};
 
@@ -170,7 +170,7 @@ void sensor_send(uint8_t sindx)
     Serial.printf("Sending: %s\n", sensor[sindx].label);
     for(uint8_t vindx = VALUE_TEMPERATURE; vindx < VALUE_NBR_OF; vindx++ )
     {
-        sensor_value_send(sindx, vindx);
+        sensor_value_print(sindx, vindx);
     }
 }
 
@@ -334,9 +334,9 @@ void sensor_task(void)
             sensor_th.state = 10;
             break;
         case 30:
-            if(sensor_value_send(sensor_indx, value_indx) > 0)
+            if(sensor_value_print(sensor_indx, value_indx) > 0)
             {
-                next_send = millis() + 100;
+                next_send = millis() + 60000;
                 sensor_th.state = 40;
             }            
             else sensor_th.state = 10;
