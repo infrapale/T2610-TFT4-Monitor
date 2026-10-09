@@ -4,6 +4,8 @@
 #include "box.h"
 // #include <TFT_eSPI.h> 
 
+#define BOX_MAX_NUMBER      48
+#define BOX_DEFAULT_GROUP   0
 
 #define BOX_RESLOUTION_320X240  1
 #define BOX_RESLOUTION_480X320  2

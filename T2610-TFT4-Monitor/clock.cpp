@@ -1,3 +1,5 @@
+
+
 /*******************************************************************************
 clock.cpp
 ********************************************************************************
@@ -28,9 +30,17 @@ void clock_task(void);
 clock_st clock_mgr;
 
 
-
 // atask_st:            = {"Label          ", ival, next, state, prev, cntr, run, task_ptr };
 atask_st clock_th       = {"Clock Task     ", 1000,    0,     0,  255,    0,   1, clock_task};
+
+
+
+
+// Days per month for non-leap and leap years
+static const uint8_t days_in_month[2][12] = {
+    {31,28,31,30,31,30,31,31,30,31,30,31},
+    {31,29,31,30,31,30,31,31,30,31,30,31}
+};
 
 void clock_initialize(void)
 {
@@ -42,163 +52,135 @@ void clock_initialize(void)
     clock_mgr.last_hour = 0;
     clock_mgr.new_hour_event = false;
 }
-void clock_print_date_time(const struct tm *t)
-{ 
-    char buff[40];
-    //strftime(buff, sizeof(buff), "%Y-%m-%d %H:%M:%S (%Z)", t);
-    strftime(buff, sizeof(buff), "%Y-%m-%d %H:%M:%S", t);
-    Serial.println(buff);
-    
-}
-void clock_print_my_time(void)
+
+static bool is_leap(uint32_t year)
 {
-    clock_print_date_time(&clock_mgr.my_time);
+    return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+}
+
+// Convert epoch seconds → struct tm (UTC)
+void epoch_to_tm(uint32_t epoch, struct tm *out)
+{
+    uint32_t secs = epoch;
+
+    out->tm_sec  = secs % 60;
+    secs /= 60;
+    out->tm_min  = secs % 60;
+    secs /= 60;
+    out->tm_hour = secs % 24;
+
+    uint32_t days = secs / 24;
+
+    // Epoch starts at 1970-01-01
+    uint32_t year = 1970;
+    while (true) {
+        uint32_t days_in_year = is_leap(year) ? 366 : 365;
+        if (days < days_in_year) break;
+        days -= days_in_year;
+        year++;
+    }
+    out->tm_year = year - 1900;
+
+    uint8_t leap = is_leap(year) ? 1 : 0;
+    uint8_t month = 0;
+    while (days >= days_in_month[leap][month]) {
+        days -= days_in_month[leap][month];
+        month++;
+    }
+
+    out->tm_mon  = month;
+    out->tm_mday = days + 1;
+    out->tm_isdst = 0;
+}
+
+uint32_t tm_to_epoch(const struct tm *t)
+{
+    uint32_t year = t->tm_year + 1900;
+    uint32_t month = t->tm_mon;
+    uint32_t day = t->tm_mday - 1;
+
+    uint32_t days = 0;
+
+    // Add days for all previous years
+    for (uint32_t y = 1970; y < year; y++) {
+        days += is_leap(y) ? 366 : 365;
+    }
+
+    // Add days for previous months in this year
+    uint8_t leap = is_leap(year) ? 1 : 0;
+    for (uint32_t m = 0; m < month; m++) {
+        days += days_in_month[leap][m];
+    }
+
+    // Add days in this month
+    days += day;
+
+    uint32_t epoch = days * 86400;
+    epoch += t->tm_hour * 3600;
+    epoch += t->tm_min  * 60;
+    epoch += t->tm_sec;
+
+    return epoch;
+}
+
+void tm_to_string(const struct tm *t, char *buff, size_t len)
+{
+    snprintf(buff, len,
+             "%04d-%02d-%02d %02d:%02d:%02d",
+             t->tm_year + 1900,
+             t->tm_mon + 1,
+             t->tm_mday,
+             t->tm_hour,
+             t->tm_min,
+             t->tm_sec);
 }
 
 void clock_set_date_time(void)
 {
-    struct tm tmp_time = {0};
-    Serial.println("clock_set_date_time");
-
+    struct tm tmp = {0};
     uint8_t errors = 0;
-    Serial.printf("Time: %s\n", rfm.rx.buff);
 
     if ((rfm.rx.field_count == 8) && (rfm.rx.field[1][0] == '#'))
     {
-        // Year: 2026 → tm_year = 126
-        tmp_time.tm_year = (uint16_t)msg_robust_atoi(rfm.rx.field[3], &errors, 2000, 2100) - 1900;
-
-        // Month: 1–12 in message → 0–11 in tm
-        uint8_t month = (uint8_t)msg_robust_atoi(rfm.rx.field[4], &errors, 1, 12);
-        tmp_time.tm_mon = month - 1;
-
-        tmp_time.tm_mday = (uint8_t)msg_robust_atoi(rfm.rx.field[5], &errors, 1, 31);
-        tmp_time.tm_hour = (uint8_t)msg_robust_atoi(rfm.rx.field[6], &errors, 0, 23);
-        tmp_time.tm_min  = (uint8_t)msg_robust_atoi(rfm.rx.field[7], &errors, 0, 59);
-        tmp_time.tm_sec  = 0;
-        tmp_time.tm_isdst = -1;   // let mktime figure it out
-
-        Serial.printf("time errors %d\n", errors);
-        clock_print_date_time(&tmp_time);
+        tmp.tm_year = msg_robust_atoi(rfm.rx.field[3], &errors, 2000, 2100) - 1900;
+        tmp.tm_mon  = msg_robust_atoi(rfm.rx.field[4], &errors, 1, 12) - 1;
+        tmp.tm_mday = msg_robust_atoi(rfm.rx.field[5], &errors, 1, 31);
+        tmp.tm_hour = msg_robust_atoi(rfm.rx.field[6], &errors, 0, 23);
+        tmp.tm_min  = msg_robust_atoi(rfm.rx.field[7], &errors, 0, 59);
+        tmp.tm_sec  = 0;
 
         if (errors == 0) {
-            time_t t = mktime(&tmp_time);   // normalize into time_t
-
-            if (t == (time_t)-1) {
-                Serial.println("mktime failed (out of range)");
-            } else {
-                // Store both time_t and normalized tm
-                clock_mgr.time_epoch = t;
-                clock_mgr.my_time    = tmp_time;
-                clock_print_date_time(&clock_mgr.my_time);
-            }
-        } else {
-            Serial.println("!!!msg_time_action: Integer conversion Error");
+            clock_mgr.time_epoch = tm_to_epoch(&tmp);
+            clock_mgr.my_time    = tmp;
         }
-    }
-    else {
-        Serial.println("Incorrect Time message");
     }
 
     clock_mgr.next_minute = millis() + 60000;
 }
 
-
-// void xxclock_set_date_time(void)  // deprecated
-// {
-//     struct tm   tmp_time = {0};
-//     Serial.println("clock_set_date_time");
-
-//     uint8_t errors = 0;
-//     Serial.printf("Time: %s\n", rfm.rx.buff);
-//     if((msg.field_count == 8) && (msg.fields[1][0] == '#'))
-//     {
-//         tmp_time.tm_year  = (uint16_t)msg_robust_atoi(msg.fields[3],&errors,2000,2100) -1900;    
-//         tmp_time.tm_mon   = (uint8_t)msg_robust_atoi(msg.fields[4],&errors,1,12) -1;    
-//         tmp_time.tm_mday  = (uint8_t)msg_robust_atoi(msg.fields[5],&errors,1,31);
-//         tmp_time.tm_hour  = (uint8_t)msg_robust_atoi(msg.fields[6],&errors,0,23);
-//         tmp_time.tm_min   = (uint8_t)msg_robust_atoi(msg.fields[7],&errors,0,59);
-//         tmp_time.tm_sec = 0;
-//         tmp_time.tm_isdst = -1;
-//         Serial.println();
-//         Serial.printf("time errors %d\n",errors);
-//         clock_print_date_time(&tmp_time);
-//         if (errors==0) {
-//             time_t t = mktime(&tmp_time);
-//             //clock_print_date_time(&t);
-//             clock_mgr.my_time = *localtime(&t);
-//             clock_print_date_time(&clock_mgr.my_time);
-//         }
-//         else Serial.println("!!!msg_time_action: Integer conversion Error");
-//     }
-//     else {
-//         Serial.println("Incorrect Time message");
-//     }
-//     clock_mgr.next_minute = millis() + 60000;
-// }
-
 void clock_task(void)
 {
     if (millis() > clock_mgr.next_minute)
     {
-        clock_mgr.next_minute += 60000;   // real minute; use 6000 only for testing
-
-        // Advance canonical epoch time by one minute
+        clock_mgr.next_minute += 60000;
         clock_mgr.time_epoch += 60;
 
-        if (clock_mgr.time_epoch < 0 || clock_mgr.time_epoch > 4102444800) {
-            // 2100-01-01 safety range
-            return;
-        }
-        // Derive broken-down time from epoch
-        struct tm *lt = localtime(&clock_mgr.time_epoch);
-        if (lt != nullptr) {
-            clock_mgr.my_time = *lt;
-            //clock_print_date_time(&clock_mgr.my_time);
-        }
-
+        epoch_to_tm(clock_mgr.time_epoch, &clock_mgr.my_time);
     }
 
     if (clock_mgr.last_hour != clock_mgr.my_time.tm_hour)
     {
         clock_mgr.last_hour = clock_mgr.my_time.tm_hour;
-        Serial.println("@ @ @ New Hour @ @ @");
-        clock_print_my_time();
-        switch(clock_mgr.my_time.tm_hour)
+
+        char buff[40];
+        tm_to_string(&clock_mgr.my_time, buff, sizeof(buff));
+        Serial.println(buff);
+
+        if (clock_mgr.my_time.tm_hour == 8)
         {
-            case 8:
-                Serial.println("* * * Send Report * * *");
-                msg_send_all_temp();
-                sensor_clear_all();
-                break;
+            msg_send_all_temp();
+            sensor_clear_all();
         }
     }
 }
 
-
-void xxclock_task(void)  // deprecated
-{
-    if (millis() > clock_mgr.next_minute)
-    {
-        clock_mgr.my_time.tm_min += 1;
-        time_t t = mktime(&clock_mgr.my_time);  // normalize (handles overflow)
-        clock_mgr.my_time = *localtime(&t);     // write back normalized result
-        // clock_print_date_time(&clock_mgr.my_time);
-
-        //clock_mgr.next_minute += 60000;
-        clock_mgr.next_minute += 6000;
-    }
-    if ( clock_mgr.last_hour != clock_mgr.my_time.tm_hour)
-    {
-        clock_mgr.last_hour = clock_mgr.my_time.tm_hour;
-        // Serial.printf("Hour: %d\n", clock_mgr.my_time.tm_hour);
-        msg_send_repo1();
-        sensor_clear_all();
-        // switch(clock_mgr.my_time.tm_hour)
-        // {
-        //     case 8:
-        //         msg_send_repo1();
-        //         break;
-        // }
-    }
-}

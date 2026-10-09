@@ -50,7 +50,7 @@
 #define PIN_LED_YELLOW  (21u)
 #define PIN_RUN_RFM     (22u)
 #define PIN_LDR_AN      (26u)
-#define PIN_ABTN        (27u)
+#define PIN_ABTN        (A1)
 
 //#define PIN_WD_ENABLE   PIN_DIP_SW1
 
@@ -99,5 +99,8 @@ void io_led_flash(led_index_et color, blink_et bindx, uint16_t tick_nbr);
 void io_task(void);
 
 bool io_wd_is_enabled(void);
+
+void io_debug_print(void);
+
 
 #endif

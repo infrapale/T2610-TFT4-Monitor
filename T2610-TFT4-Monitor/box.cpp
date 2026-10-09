@@ -30,8 +30,6 @@
 #include <TFT_eSPI.h> 
 
 
-#define BOX_MAX_NUMBER      48
-#define BOX_DEFAULT_GROUP   0
 
 typedef struct
 {
@@ -237,10 +235,14 @@ bool box_is_not_reserved(void)
 
 uint8_t box_get_indx(uint8_t box_group, uint8_t bindx)
 {
+    uint8_t box_indx = 255;
     if( bindx < boxgr[box_group].nbr)
-        return boxgr[box_group].index + bindx;
+        box_indx = boxgr[box_group].index + bindx;
     else 
-        return boxgr[box_group].index;
+        box_indx = boxgr[box_group].index;
+
+    if (box_indx >= BOX_MAX_NUMBER) box_indx = 0;
+    return box_indx;
 }
 
 void box_set_visible(uint8_t box_group, uint8_t bindx, boolean visible )

@@ -2,9 +2,15 @@
 #define __MAIN_H__
 #include "WString.h"
 #include <time.h>
-#define   __APP__ ((char*)"T2606_LTE_RFM_GW_Quad")
+#define   __APP__ ((char*)"T2610_TFT4_Monitor")
 
 #define  MY_ADDR_LEN    8
+#define LABEL_LEN           12
+#define TXT_LEN             40
+#define TIME_ZONE_OFFS      2
+#define UNIT_LABEL_LEN      10
+#define MEASURE_LABEL_LEN   16
+
 
 // WiFi Access Point
 #define PIRPANA
@@ -12,28 +18,25 @@
 // #define VILLA_ASTRID
 
 // HW Definitions
-//#define MCU_PICO_PLUS_2
-
+#define MCU_PICO_PLUS_2
 #define DEBUG_PRINT 
 #define SEND_TEST_MSG 
-#define T2601_PICO_RFM69
 #include <Arduino.h>
 
-#ifdef  ADA_M0_RFM69
-#define SerialX  Serial1
-#else
-#define SerialX Serial
-#endif
+typedef enum
+{
+    UNIT_TEMPERATURE = 0,
+    UNIT_HUMIDITY,
+    UNIT_AIR_PRESSURE,
+    UNIT_LIGHT,
+    UNIT_LDR,
+    UNIT_VOLTAGE,
+    UNIT_TIME,
+    UNIT_CO2,
+    UNIT_LUX,
+    UNIT_NBR_OF
+} unit_et;
 
-
-// HW Definitions
-#define MCU_PICO_PLUS_2
-
-//#define TASK_NBR_OF  3
-//#define LED_INDICATION
-
-#define MY_MODULE_TAG   'R'
-#define MY_MODULE_ADDR  '1'
 
 typedef struct
 {

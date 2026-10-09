@@ -18,4 +18,6 @@ void clock_set_date_time(void);
 
 void clock_print_my_time(void);
 
+void tm_to_string(const struct tm *t, char *buff, size_t len);
+
 #endif
