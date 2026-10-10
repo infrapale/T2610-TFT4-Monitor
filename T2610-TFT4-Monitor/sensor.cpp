@@ -40,7 +40,7 @@ extern rfm_st rfm;
 sensor_value_st value_array[30] = {0};
 
 sensor_st sensor[SENSOR_NBR_OF] =
-{   //                      Label      undef,   temp    hum     pres    lux     pir     bat     val1    val2 u  pdated
+{   //                      Label      undef,   temp    hum     pres    lux     pir     bat     val1    val2§§  updated
     [SENSOR_UNDEFINED]  = {"Undef",     {   0,      0,      0,      0,      0,      0,      0,      0,      0}, false}, 
     [SENSOR_PIHA1]      = {"PIHA1",     {   0,      1,      2,      0,      3,      0,      0,      0,      0}, false}, 
     [SENSOR_RANTA]      = {"RANTA",     {   0,      6,      7,      0,      0,      0,      0,      0,      0}, false}, 
@@ -206,6 +206,25 @@ void sensor_store_value(uint8_t sindx, uint8_t vindx, float fval)
     }
     //sensor_print(sindx);
 }
+
+float sensor_get_value(uint8_t sindx, uint8_t vindx)
+{
+    float val = 0.0;
+    uint8_t arr_indx = sensor[sindx].value_indx[vindx];
+    val = value_array[arr_indx].last;
+    return val;
+}
+
+char *sensor_get_label(uint8_t sindx)
+{
+    return sensor[sindx].label;
+}
+
+bool sensor_get_updated(uint8_t sindx)
+{
+    return sensor[sindx].updated;
+}
+
 
 uint8_t sensor_save_values(uint8_t sindx)
 {

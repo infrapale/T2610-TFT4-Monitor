@@ -123,4 +123,10 @@ void sensor_print(uint8_t sindx);
 
 void sensor_process_msg(uint8_t nbr_fields);
 
+float sensor_get_value(uint8_t sindx, uint8_t vindx);
+
+char *sensor_get_label(uint8_t sindx);
+
+bool sensor_get_updated(uint8_t sindx);
+
 #endif

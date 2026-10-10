@@ -165,7 +165,23 @@ bool dashboard_show_sensor(void)
     return true;
 }
 
-
+bool dashboard_show_temperatures(void)
+{
+    char buff[40];
+    uint8_t row= 0;
+    for(uint8_t i = 1; i < SENSOR_NBR_OF; i++)
+    {
+        if(sensor_get_updated(i)){
+            uint8_t bindx = box_get_indx(BOX_GROUP_8, row);
+            float val = sensor_get_value(i, VALUE_TEMPERATURE);
+            snprintf(buff, sizeof(buff), "%s: %.1f", sensor_get_label(i), val);
+            box_paint(bindx, BOX_SCHEME_SENSOR);
+            box_print_text(bindx, buff);
+            if(row < box_get_nbr_of_rows(BOX_GROUP_8)) row++;
+        }
+    }
+    return true;
+}
 void dashboard_next_sensor(void)
 {
     // dashboard_ctrl.menu_sensor_indx++;
@@ -207,7 +223,8 @@ void dashboard_update_task(void)
             break;
 
         case 20:
-            if (dashboard_show_sensor()) {
+            if (dashboard_show_temperatures()) {
+            //if (dashboard_show_sensor()) {
                 next_step_ms = millis() + 10000;
                 dbh.state = 30;
             } else {

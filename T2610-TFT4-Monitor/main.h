@@ -17,6 +17,15 @@
 // #define LILLA_ASTRID
 // #define VILLA_ASTRID
 
+
+#define BOARD_PICO_TFT_4KEYS        0
+#define BOARD_TFT_4_QUADCORE_PICO   1
+
+#define TFT_TARGET_BOARD  BOARD_TFT_4_QUADCORE_PICO
+
+
+
+
 // HW Definitions
 #define MCU_PICO_PLUS_2
 #define DEBUG_PRINT 

@@ -245,6 +245,11 @@ uint8_t box_get_indx(uint8_t box_group, uint8_t bindx)
     return box_indx;
 }
 
+uint8_t box_get_nbr_of_rows(uint8_t box_group)
+{
+    return boxgr[box_group].nbr;
+}
+
 void box_set_visible(uint8_t box_group, uint8_t bindx, boolean visible )
 {
     uint8_t indx = box_get_indx(box_group, bindx);

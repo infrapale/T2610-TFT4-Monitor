@@ -46,7 +46,7 @@ void initialize_tasks(void)
     io_initialize();
     //atask_add_new(&debug_print_handle);
     //uart_initialize();
-    r69_initialize();
+    //r69_initialize();
     ruuvi_initialize();
 }
 

@@ -10,6 +10,7 @@
 #define BOX_RESLOUTION_320X240  1
 #define BOX_RESLOUTION_480X320  2
 
+
 #if TFT_TARGET_BOARD == BOARD_PICO_TFT_4KEYS
     #define BOX_RESLOUTION  BOX_RESLOUTION_320X240
     #define TFT_LS_WIDTH        320
@@ -98,6 +99,8 @@ uint8_t box_get_indx(uint8_t box_group, uint8_t bindx);
 void box_set_visible(uint8_t box_group, uint8_t bindx, boolean visible );
 
 void box_print_text(uint8_t bindx, char *txt);
+
+uint8_t box_get_nbr_of_rows(uint8_t box_group);
 
 void box_print_line(char *txt, uint8_t color_sch);
 
