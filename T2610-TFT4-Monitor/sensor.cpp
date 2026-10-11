@@ -37,7 +37,12 @@
 
 extern rfm_st rfm;
 
-sensor_value_st value_array[30] = {0};
+sensor_value_st value_array[MATRIX_WIDTH] = {0};
+
+matrix_ctrl_st matrix_ctrl = {0};
+
+sensor_data_point_st sensor_data_point[DATA_POINT_NBR_OF] ={0};
+
 
 sensor_st sensor[SENSOR_NBR_OF] =
 {   //                      Label      undef,   temp    hum     pres    lux     pir     bat     val1    val2§§  updated
@@ -203,6 +208,15 @@ void sensor_store_value(uint8_t sindx, uint8_t vindx, float fval)
         value_array[arr_indx].daily_cntr++;
         value_array[arr_indx].updated = true;
         value_array[arr_indx].average = value_array[arr_indx].daily_sum / value_array[arr_indx].daily_cntr;
+
+        sensor_data_point[matrix_ctrl.cursor].sensor_indx = sindx;
+        sensor_data_point[matrix_ctrl.cursor].unit_indx = vindx;
+        sensor_data_point[matrix_ctrl.cursor].epoch = matrix_ctrl.cursor;
+        sensor_data_point[matrix_ctrl.cursor].value = fval;
+        if(matrix_ctrl.cursor < DATA_POINT_NBR_OF -1) matrix_ctrl.cursor++;
+        else matrix_ctrl.cursor = 0;
+
+
     }
     //sensor_print(sindx);
 }

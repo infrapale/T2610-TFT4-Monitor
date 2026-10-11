@@ -24,7 +24,7 @@ main_ctrl_st main_ctrl = {
 
 
 void print_debug_task(void);
-atask_st debug_th       =     {"Debug Task     ", 10000,    0,     0,  255,    0,  1,  print_debug_task };
+atask_st debug_th       =     {"Debug Task     ", 1000,    0,     0,  255,    0,  1,  print_debug_task };
 
 extern msg_st msg;
 
@@ -45,7 +45,7 @@ void setup() {
     Serial.printf(" Compiled: %s %s\n",__DATE__, __TIME__);
 
     atask_initialize();
-    atask_add_new(&debug_th);
+    // atask_add_new(&debug_th);
     sensor_initialize();
     lte_initialize();
     msg_initialize();

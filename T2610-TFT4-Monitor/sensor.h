@@ -4,6 +4,10 @@
 #define MAX_TOKENS      16
 #define MAX_TOKEN_LEN   16
 
+#define  MATRIX_WIDTH   30
+#define  MATRIX_DEPTH   200
+#define  DATA_POINT_NBR_OF       1000
+
 typedef enum
 {
     VALUE_TAG_UNDEF  = '#',
@@ -69,6 +73,20 @@ typedef struct
     bool        updated;
 
 } sensor_value_st;
+
+typedef struct
+{
+    uint16_t cursor;
+} matrix_ctrl_st;
+
+typedef struct
+{
+    uint32_t    epoch;
+    uint8_t     sensor_indx;
+    uint8_t     unit_indx;
+    float       value;
+} sensor_data_point_st;
+
 
 
 typedef struct

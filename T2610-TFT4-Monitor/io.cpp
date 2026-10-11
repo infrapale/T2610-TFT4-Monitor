@@ -118,6 +118,9 @@ bool io_wd_is_enabled(void)
 void io_debug_print(void)
 {
     uint16_t akbd = analogRead(PIN_ABTN);
-    Serial.printf("Analog Kbd: %d\n", akbd);
+    uint16_t ldr = analogRead(PIN_LDR_AN);
+    uint8_t pir = digitalRead(PIN_PIR);
+    Serial.printf("Kbd: %d ldr: %d pir: %d\n", akbd, ldr, pir);
+
 
 }

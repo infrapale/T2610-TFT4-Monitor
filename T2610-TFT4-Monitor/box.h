@@ -124,6 +124,10 @@ void box_paint(uint8_t bindx, uint8_t color_sch);
 
 void box_scroll_down(uint8_t box_group);
 
+void box_draw_line(uint8_t bindx, uint32_t x0, uint32_t y0,uint32_t x1,uint32_t y1);
+
+void box_draw_dot(uint8_t bindx, uint32_t x0, uint32_t y0,uint32_t r,uint32_t color);
+
 void box_scroll_test(uint8_t group);
 
 void box_structure_print(void);

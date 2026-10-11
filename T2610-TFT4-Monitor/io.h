@@ -49,7 +49,7 @@
 #define PIN_PIR         (20u)
 #define PIN_LED_YELLOW  (21u)
 #define PIN_RUN_RFM     (22u)
-#define PIN_LDR_AN      (26u)
+#define PIN_LDR_AN      (A0)
 #define PIN_ABTN        (A1)
 
 //#define PIN_WD_ENABLE   PIN_DIP_SW1

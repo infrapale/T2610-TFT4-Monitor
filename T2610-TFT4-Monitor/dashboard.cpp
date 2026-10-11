@@ -7,6 +7,7 @@
 #include "main.h"
 #include "clock.h"
 #include <Arduino.h>
+#include <TFT_eSPI.h>
 
 typedef struct
 {
@@ -37,6 +38,7 @@ dashboard_backlight_st backlight = {0};
 extern clock_st clock_mgr;   // from clock.cpp
 //extern void tm_to_string(const struct tm *t, char *buff, size_t len);
 extern box_group_st boxgr[];
+extern sensor_data_point_st sensor_data_point[];
 
 static uint8_t prev_minute = 99;
 static uint32_t next_sensor_update = 0;
@@ -107,7 +109,7 @@ void dashboard_big_time(void)
 {
     if (!box_is_not_reserved()) return;
 
-    uint8_t idx_time_big  = box_get_indx(BOX_GROUP_3, 0);
+    uint8_t idx_time_big  = box_get_indx(BOX_GROUP_3, 2);
     uint8_t idx_time_head = box_get_indx(BOX_GROUP_8, 0);
 
     if (!box_index_ok(idx_time_big) || !box_index_ok(idx_time_head)) {
@@ -134,6 +136,13 @@ void dashboard_big_time(void)
     snprintf(buff, sizeof(buff), " %02d:%02d", t->tm_hour, minute);
     box_paint(idx_time_big, BOX_SCHEME_TIME);
     box_print_text(idx_time_big, buff);
+
+    box_draw_line(idx_time_big, 5, 10, 122, 33);
+    for (uint16_t i = 0; i < 470; i++)
+    {
+        box_draw_dot(idx_time_big, i+5, (uint32_t)sensor_data_point[i].value, 2, TFT_WHITE);
+    }
+
 }
 
 bool dashboard_show_sensor(void)
@@ -252,10 +261,16 @@ void dashboard_backlight_task(void)
             blh.state = 10; //dark
             break;
         case 10:
-            if(backlight.ldr_value > 3400 ) blh.state = 100;
-            else if(backlight.ldr_value > 3000 ) blh.state = 100;
-            else if(backlight.ldr_value > 2000 ) blh.state = 200;
-            else blh.state = 100;
+            if(backlight.ldr_value > 700 ) backlight.bl_pwm = 20;
+            else if(backlight.ldr_value > 500 ) backlight.bl_pwm = 50;
+            else if(backlight.ldr_value > 200 ) backlight.bl_pwm = 100;
+            else backlight.bl_pwm = 255;
+            backlight.timeout = millis() + 1000; 
+            analogWrite(PIN_TFT_LED, backlight.bl_pwm);
+            blh.state = 20;
+            break;
+        case 20:
+            if (millis() > backlight.timeout) blh.state = 10;
             break;
         case 100: 
             if (backlight.pir_value){
