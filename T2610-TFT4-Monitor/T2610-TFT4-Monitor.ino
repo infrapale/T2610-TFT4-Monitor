@@ -54,7 +54,6 @@ void setup() {
 
     box_run_tft_pin_check();
     box_initialize();
-    box_structure_print();
     dashboard_initialize();   // start dashboard task
     menu_initialize();        // starting scan and read tasks
     // dingdong_initialize();

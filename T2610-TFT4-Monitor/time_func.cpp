@@ -6,6 +6,7 @@
 #include "RTC_NXP.h"
 #include "RTClib.h"
 #include "comm.h"
+#include "msg.h"
 
 
 typedef struct 
@@ -34,6 +35,7 @@ char week_day[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", 
 DateTime time_now;
 DateTime cloud_time;
 
+basic_time_st basic_time = {0};
 
 bool time_begin(void)
 {
@@ -78,15 +80,25 @@ void time_lost_power(bool force_new_time)
 
 }
 
-void time_set_comm_date_time(comm_data_st *msg)
+void time_set_comm_date_time(msg_st *msg)
 {
-    rtc.adjust(DateTime(
-            atoi(msg->field[1]),
-            atoi(msg->field[2]),
-            atoi(msg->field[3]),
-            atoi(msg->field[4]),
-            atoi(msg->field[5]),
-            0));
+    if ((msg->field[1][0] == '#') && (msg->field[2][0] == 'P') && (msg->field_count >= 7))
+    {
+        basic_time.year = atoi(msg->field[3]);
+        basic_time.month = atoi(msg->field[4]);
+        basic_time.day = atoi(msg->field[5]);
+        basic_time.hour = atoi(msg->field[6]);
+        basic_time.minute = atoi(msg->field[7]);
+    }
+    
+    //     rtc.adjust(DateTime(
+    //             atoi(msg->field[3]),
+    //             atoi(msg->field[4]),
+    //             atoi(msg->field[5]),
+    //             atoi(msg->field[6]),
+    //             atoi(msg->field[7]),
+    //             0));
+    // }
 }
 
 DateTime *time_get_time_now(void)
@@ -105,6 +117,15 @@ void time_to_string(char *buff )
         now.year(),
         now.month(),
         now.day()
+    );   
+}
+
+void time_hh_mm_to_string(char *buff )
+{
+    DateTime now = rtc.now();
+    sprintf(buff, "%d:%02d",
+        now.hour(),
+        now.minute()
     );   
 }
 

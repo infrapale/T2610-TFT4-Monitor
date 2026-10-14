@@ -39,6 +39,7 @@ extern clock_st clock_mgr;   // from clock.cpp
 //extern void tm_to_string(const struct tm *t, char *buff, size_t len);
 extern box_group_st boxgr[];
 extern sensor_data_point_st sensor_data_point[];
+extern basic_time_st basic_time;
 
 static uint8_t prev_minute = 99;
 static uint32_t next_sensor_update = 0;
@@ -51,18 +52,18 @@ atask_st blh      =   {"Backlight task ", 1000,   0,     0,  255,    0,   1,  da
 
 void dashboard_clear(void)
 {
-    if (box_is_not_reserved()){
-        uint8_t bindx = box_get_indx(BOX_GROUP_1, 0);
-        box_paint(bindx, 0);
-        box_show_one(bindx);
-    } 
+    uint8_t bindx = box_get_indx(BOX_GROUP_1, 0, 0);
+    box_paint(bindx, BOX_SCHEME_UNDEF);
+    box_show_one(bindx);
 }
 
 void dashboard_initialize(void)
 {
+    Serial.println("dashbord_initialize");
     atask_add_new(&dbh);
     atask_add_new(&blh);
     dashboard_clear();
+    Serial.println(" . . .dashbord_initialize completed");
 }
 
 void dashboard_set_mode(dashboard_mode_et new_mode)
@@ -75,23 +76,11 @@ void dashboard_set_mode(dashboard_mode_et new_mode)
 static bool box_valid(uint8_t group, uint8_t bindx)
 {
     if (group >= BOX_GROUP_NBR_OF) return false;
-    if (bindx >= boxgr[group].nbr) return false;
+    if (bindx >= boxgr[group].nbr_r) return false;
     uint8_t idx = box_get_indx(group, bindx);
     if (idx >= BOX_MAX_NUMBER) return false;
     return true;
 }
-
-static void safe_box_print(uint8_t group, uint8_t bindx, uint8_t scheme, const char *txt)
-{
-    if (!box_valid(group, bindx)) {
-        Serial.printf("Invalid box: group=%d bindx=%d\n", group, bindx);
-        return;
-    }
-    uint8_t idx = box_get_indx(group, bindx);
-    box_paint(idx, scheme);
-    box_print_text(idx, (char*)txt);
-}
-
 
 void dashboard_show_sensor_print(void){
     dashboard_set_mode(DASHBOARD_BASIC_ROWS);
@@ -107,17 +96,7 @@ static bool box_index_ok(uint8_t idx)
 
 void dashboard_big_time(void)
 {
-    if (!box_is_not_reserved()) return;
-
-    uint8_t idx_time_big  = box_get_indx(BOX_GROUP_3, 2);
-    uint8_t idx_time_head = box_get_indx(BOX_GROUP_8, 0);
-
-    if (!box_index_ok(idx_time_big) || !box_index_ok(idx_time_head)) {
-        Serial.printf("dashboard_big_time(): bad idx %d %d\n",
-                      idx_time_big, idx_time_head);
-        return;
-    }
-
+    uint8_t idx_time_big  = box_get_indx(BOX_GROUP_4, 0, 0);
     // use safe clock, not DateTime/RTC
     const struct tm *t = &clock_mgr.my_time;
 
@@ -125,68 +104,35 @@ void dashboard_big_time(void)
     if (minute == prev_minute) return;
     prev_minute = minute;
 
-    char buff[80];
-
-    // full date/time
-    tm_to_string(t, buff, sizeof(buff));
-    box_paint(idx_time_head, BOX_SCHEME_TIME);
-    box_print_text(idx_time_head, buff);
-
+    char buff[40];
+    //time_hh_mm_to_string(buff );
     // HH:MM
-    snprintf(buff, sizeof(buff), " %02d:%02d", t->tm_hour, minute);
+    //snprintf(buff, sizeof(buff), " %02d:%02d", t->tm_hour, minute);
+    snprintf(buff, sizeof(buff), " %02d:%02d", basic_time.hour, basic_time.minute);
     box_paint(idx_time_big, BOX_SCHEME_TIME);
     box_print_text(idx_time_big, buff);
-
-    box_draw_line(idx_time_big, 5, 10, 122, 33);
-    for (uint16_t i = 0; i < 470; i++)
-    {
-        box_draw_dot(idx_time_big, i+5, (uint32_t)sensor_data_point[i].value, 2, TFT_WHITE);
-    }
-
 }
 
-bool dashboard_show_sensor(void)
-{
-    if (!box_is_not_reserved()) return false;
-
-    uint8_t idx_value = box_get_indx(BOX_GROUP_3, 1);
-    uint8_t idx_label = box_get_indx(BOX_GROUP_8, 3);
-
-    if (!box_index_ok(idx_value) || !box_index_ok(idx_label)) {
-        Serial.printf("dashboard_show_sensor(): bad idx %d %d\n",
-                      idx_value, idx_label);
-        return false;
-    }
-
-    if (millis() < next_sensor_update) return false;
-    next_sensor_update = millis() + 10000;
-
-    char buff[40];
-
-    snprintf(buff, sizeof(buff), "Sensor");
-    box_paint(idx_label, BOX_SCHEME_SENSOR);
-    box_print_text(idx_label, buff);
-
-    snprintf(buff, sizeof(buff), " %.1f", 3.14);
-    box_paint(idx_value, BOX_SCHEME_SENSOR);
-    box_print_text(idx_value, buff);
-
-    return true;
-}
 
 bool dashboard_show_temperatures(void)
 {
     char buff[40];
     uint8_t row= 0;
+    uint8_t col= 0;
     for(uint8_t i = 1; i < SENSOR_NBR_OF; i++)
     {
         if(sensor_get_updated(i)){
-            uint8_t bindx = box_get_indx(BOX_GROUP_8, row);
+            uint8_t bindx = box_get_indx(BOX_GROUP_MID_5X2, row, col);
             float val = sensor_get_value(i, VALUE_TEMPERATURE);
             snprintf(buff, sizeof(buff), "%s: %.1f", sensor_get_label(i), val);
+            //snprintf(buff, sizeof(buff), "i: %d, row: %d col: %d", i, row, col);
             box_paint(bindx, BOX_SCHEME_SENSOR);
             box_print_text(bindx, buff);
-            if(row < box_get_nbr_of_rows(BOX_GROUP_8)) row++;
+            if(col == 1){
+                col = 0; 
+                if(row < box_get_nbr_of_rows(BOX_GROUP_MID_5X2)) row++;
+            }
+            else col = 1;
         }
     }
     return true;
@@ -217,8 +163,6 @@ void dashboard_update_task(void)
 {
     static uint32_t next_step_ms = 0;
 
-    if (!box_is_not_reserved()) return;
-
     switch (dbh.state)
     {
         case 0:
@@ -243,7 +187,7 @@ void dashboard_update_task(void)
 
         case 30:
             if (millis() > next_step_ms) {
-                box_update_area();
+                //box_update_area();
                 dbh.state = 10;
             }
             break;

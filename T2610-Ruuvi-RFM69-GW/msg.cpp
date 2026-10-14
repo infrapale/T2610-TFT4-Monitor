@@ -26,9 +26,9 @@ sms_cmd_st sms_cmd[SMS_CMD_NBR_OF] =
     {"REPO2",   SMS_CMD_SENSOR_REPO2},
 };
 
-void msg_task(void);
+// void msg_task(void);
 //                                  123456789012345   ival  next  state  prev  cntr flag  call backup
-atask_st msg_th              =    {"Message Task   ", 5000,    0,     0,  255,    0,  1,  msg_task };
+// atask_st msg_th              =    {"Message Task   ", 5000,    0,     0,  255,    0,  1,  msg_task };
 
 
 msg_st msg = {0};
@@ -207,55 +207,55 @@ void msg_send_repo1(void)
     // lte_send_msg(lte_get_sender_nbr(), buff);
 }
 
-void msg_process_sms_cmd(void)
-{
-    int cmd_indx = -1; 
-    int16_t param;
-    char    buff[ R69_MSG_SIZE];
+// void msg_process_sms_cmd(void)
+// {
+//     int cmd_indx = -1; 
+//     int16_t param;
+//     char    buff[ R69_MSG_SIZE];
 
-    Serial.println("msg_process_sms_cmd");
-    for(uint8_t i = 0; ((i < SMS_CMD_NBR_OF) && (cmd_indx == -1)); i++)
-    {
-        if(strncmp(msg.fields[0], sms_cmd[i].cmd, MSG_MAX_SMS_CMD_LEN) == 0) cmd_indx = i;
-        Serial.printf("sms %s - %s: %d\n", msg.fields[0], sms_cmd[i].cmd, cmd_indx);
-    }
-    Serial.printf("cmd_indx= %d\n", cmd_indx);
+//     Serial.println("msg_process_sms_cmd");
+//     for(uint8_t i = 0; ((i < SMS_CMD_NBR_OF) && (cmd_indx == -1)); i++)
+//     {
+//         if(strncmp(msg.fields[0], sms_cmd[i].cmd, MSG_MAX_SMS_CMD_LEN) == 0) cmd_indx = i;
+//         Serial.printf("sms %s - %s: %d\n", msg.fields[0], sms_cmd[i].cmd, cmd_indx);
+//     }
+//     Serial.printf("cmd_indx= %d\n", cmd_indx);
 
-    if (cmd_indx != -1)
-    {
-        param = atoi(msg.fields[1]);
-        switch(cmd_indx)
-        {
-            case SMS_CMD_HOME:
-                break;
-            case SMS_CMD_RELAY_PUMP:
-                sprintf(buff,"<R;RANTA;%s;PUMP;%d>", main_ctrl.my_addr, param);
-                r69_send(buff);
-                Serial.println(buff);
-                break;
-            case SMS_CMD_RELAY_PEER:
-                sprintf(buff,"<R;RANTA;%s;PEER;%d>", main_ctrl.my_addr, param);
-                r69_send(buff);
-                Serial.println(buff);
-                break;
-            case SMS_CMD_SENSOR_PIHA1:
-                sprintf(buff,"<S;PIHA1;T;-12.3;H;44;L;2344>");
-                Serial.println(buff);
-                break;
-            case SMS_CMD_SENSOR_REPO1:
-                msg_send_repo1();
-                break;
-            case SMS_CMD_SENSOR_REPO2:
-                sprintf(buff,"<S;REPO2;T;22.3;W;13.4;l;876>");
-                Serial.println(buff);
-                break;
-            default:
-                break;
-        }
+//     if (cmd_indx != -1)
+//     {
+//         param = atoi(msg.fields[1]);
+//         switch(cmd_indx)
+//         {
+//             case SMS_CMD_HOME:
+//                 break;
+//             case SMS_CMD_RELAY_PUMP:
+//                 sprintf(buff,"<R;RANTA;%s;PUMP;%d>", main_ctrl.my_addr, param);
+//                 r69_send(buff);
+//                 Serial.println(buff);
+//                 break;
+//             case SMS_CMD_RELAY_PEER:
+//                 sprintf(buff,"<R;RANTA;%s;PEER;%d>", main_ctrl.my_addr, param);
+//                 r69_send(buff);
+//                 Serial.println(buff);
+//                 break;
+//             case SMS_CMD_SENSOR_PIHA1:
+//                 sprintf(buff,"<S;PIHA1;T;-12.3;H;44;L;2344>");
+//                 Serial.println(buff);
+//                 break;
+//             case SMS_CMD_SENSOR_REPO1:
+//                 msg_send_repo1();
+//                 break;
+//             case SMS_CMD_SENSOR_REPO2:
+//                 sprintf(buff,"<S;REPO2;T;22.3;W;13.4;l;876>");
+//                 Serial.println(buff);
+//                 break;
+//             default:
+//                 break;
+//         }
 
-    }
+//     }
 
-}
+// }
 
 void  msg_time_action(void)
 {
@@ -284,50 +284,21 @@ void msg_process(msg_from_et from, char *raw_msg )
     //Serial.printf("Message1 %d: %s\n", from, raw_msg);
 
     msg.from = from;
-    switch(from) 
-    {
-        case MSG_FROM_UART:
-            strncpy(msg.raw, raw_msg, MSG_MAX_RAW_MSG_LEN);
-            break;
-        case MSG_FROM_RFM:
-            strncpy(msg.raw, raw_msg, MSG_MAX_RAW_MSG_LEN);
-            break;
-        case MSG_FROM_SMS:
-             msg_set_sms_string(raw_msg);
-            break;
-    } 
+    strncpy(msg.raw, raw_msg, MSG_MAX_RAW_MSG_LEN);
     //Serial.printf("Message2 %d: %s\n", from, msg.raw);
 
     msg.field_count = msg_split(msg.raw);
     // msg_sub_print();
-    switch(from)
+    switch(msg.fields[0][0])
     {
-        case MSG_FROM_UART:
-            switch(msg.fields[0][0])
-            {
-                case 'R':
-                    msg_relay_action();
-                    break;
-                default:
-                    break;    
-            }
+        case 'R':
+            msg_relay_action();
             break;
-        case MSG_FROM_RFM:
-            switch(msg.fields[0][0])
-            {
-                case 'R':
-                    msg_relay_action();
-                    break;
-                case 'T':
-                    //msg_time_action();
-                    clock_set_date_time();
-                default:
-                    break;    
-            }
-            break;
-        case MSG_FROM_SMS:
-            msg_process_sms_cmd();
-            break;
+        case 'T':
+            //msg_time_action();
+            clock_set_date_time();
+        default:
+            break;    
     }
 
 }
@@ -340,41 +311,41 @@ void msg_process(msg_from_et from, char *raw_msg )
 //     REPO1       Get sensor report 1           SMS: <S;#;PIHA1;T;12.3;TUPA1;T;22.5;WATER;T;9.4 >
 
 
-typedef struct 
-{
-    msg_from_et from;
-    char   msg[60];
-} test_msg_st;
+// typedef struct 
+// {
+//     msg_from_et from;
+//     char   msg[60];
+// } test_msg_st;
 
-#define TEST_MSG_NBR_OF 8
-test_msg_st test[TEST_MSG_NBR_OF] =
-{
-      {MSG_FROM_SMS, "PUMP;1"},
-      {MSG_FROM_SMS, "PUMP;100"},
-      {MSG_FROM_SMS, "PUMP;0"},
-      {MSG_FROM_RFM, "\r\n<S;#;PIHA1;T;-12.3;H;44;L;2344>"},
-      {MSG_FROM_RFM, "<S;RANTA;T;22.3;W;13.4;l;876>\n"},
-      {MSG_FROM_RFM, "{A;PIHA2;PIR1;1;PIR2;0}"},
-      {MSG_FROM_RFM, "<A#TK1OVI1;>"},
-      {MSG_FROM_RFM, "<A;#;TK1;OVI1;?>"}
-};
+// #define TEST_MSG_NBR_OF 8
+// test_msg_st test[TEST_MSG_NBR_OF] =
+// {
+//       {MSG_FROM_SMS, "PUMP;1"},
+//       {MSG_FROM_SMS, "PUMP;100"},
+//       {MSG_FROM_SMS, "PUMP;0"},
+//       {MSG_FROM_RFM, "\r\n<S;#;PIHA1;T;-12.3;H;44;L;2344>"},
+//       {MSG_FROM_RFM, "<S;RANTA;T;22.3;W;13.4;l;876>\n"},
+//       {MSG_FROM_RFM, "{A;PIHA2;PIR1;1;PIR2;0}"},
+//       {MSG_FROM_RFM, "<A#TK1OVI1;>"},
+//       {MSG_FROM_RFM, "<A;#;TK1;OVI1;?>"}
+// };
 
-void msg_mod_test(void)
-{
-    Serial.println("msg.cpp module tests:");
-    for(uint8_t i = 0; i < TEST_MSG_NBR_OF; i++)
-    {
-        msg_process(test[i].from, test[i].msg);
-    }
-}
+// void msg_mod_test(void)
+// {
+//     Serial.println("msg.cpp module tests:");
+//     for(uint8_t i = 0; i < TEST_MSG_NBR_OF; i++)
+//     {
+//         msg_process(test[i].from, test[i].msg);
+//     }
+// }
 
-void msg_task(void)
-{
-    static uint8_t indx = 0;
+// void msg_task(void)
+// {
+//     static uint8_t indx = 0;
 
-    msg_process(test[indx].from, test[indx].msg);
-    indx++;
-    if(indx >= TEST_MSG_NBR_OF) indx = 0;
+//     msg_process(test[indx].from, test[indx].msg);
+//     indx++;
+//     if(indx >= TEST_MSG_NBR_OF) indx = 0;
 
 
-}
+// }

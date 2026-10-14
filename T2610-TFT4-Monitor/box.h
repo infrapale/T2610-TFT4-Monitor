@@ -4,7 +4,7 @@
 #include "box.h"
 // #include <TFT_eSPI.h> 
 
-#define BOX_MAX_NUMBER      48
+#define BOX_MAX_NUMBER      64
 #define BOX_DEFAULT_GROUP   0
 
 #define BOX_RESLOUTION_320X240  1
@@ -28,11 +28,17 @@
 	#include <User_Setup.h>           // Default setup is root library folder
 #endif
 
+#define TFT_SMALL_ROW_HIGHT TFT_LS_HIGHT / TFT_LS_ROWS
+#define BOX_NUMERIC_ROWS    5
+#define BOX_NUMERIC_COLS    2
+
+
 typedef enum 
 {
     BOX_GROUP_1 = 0,
     BOX_GROUP_16,
     BOX_GROUP_8,
+    BOX_GROUP_MID_5X2,
     BOX_GROUP_4,
     BOX_GROUP_3,
     BOX_GROUP_2,
@@ -43,7 +49,7 @@ typedef enum
 
 typedef enum
 {
-    BOX_FONT_GLCD   = 1,
+    BOX_FONT_GLCD       = 1,
     BOX_FONT_SMALL_16  = 2,
     BOX_FONT_MEDIUM_26 = 4,
     BOX_FONT_LARGE_48  = 6,            
@@ -59,10 +65,11 @@ typedef enum
 
 typedef enum
 {
-    BOX_SCHEME_BL_WH     = 0,
+    BOX_SCHEME_UNDEF = 0,
+    BOX_SCHEME_BL_WH,
     BOX_SCHEME_BL_WH_BRD,
     BOX_SCHEME_BLUE_YELLOW,
-    BOX_SCHEME_3,
+    BOX_SCHEME_MENU,
     BOX_SCHEME_TIME,
     BOX_SCHEME_SENSOR,
     BOX_SCHEME_TIMEOUT,
@@ -73,15 +80,28 @@ typedef enum
 	BOX_SCHEME_NBR_OF,
 } box_color_scheme_et;
 
+typedef struct
+{
+    uint16_t fill_color;
+    uint16_t border_color;
+    uint16_t text_color;
+} box_color_st;
+
 typedef struct 
 {
+    uint16_t y0;
+    uint16_t x0;
     uint16_t height;
     uint16_t width; 
     uint16_t round;
-    uint16_t nbr;
+    uint16_t nbr_r;
+    uint16_t nbr_c;
     uint8_t  index;
     uint8_t  font_indx;
     uint8_t  font_size;
+    uint16_t txt_offs_y;
+    uint16_t txt_offs_x;
+    box_color_scheme_et color_scheme;
 } box_group_st;
 
 
@@ -91,8 +111,6 @@ void box_reserve(uint8_t res_bm);
 
 void box_release(uint8_t res_bm);
 
-bool box_is_not_reserved(void);
-
 
 uint8_t box_get_indx(uint8_t box_group, uint8_t bindx);
 
@@ -100,13 +118,17 @@ void box_set_visible(uint8_t box_group, uint8_t bindx, boolean visible );
 
 void box_print_text(uint8_t bindx, char *txt);
 
+uint8_t box_get_indx(uint8_t box_group, uint8_t row_indx, uint8_t col_indx);
+
 uint8_t box_get_nbr_of_rows(uint8_t box_group);
+uint8_t box_get_nbr_of_cols(uint8_t box_group);
+
 
 void box_print_line(char *txt, uint8_t color_sch);
 
-void box_show_one( uint8_t bindx);
+void box_show_one( uint8_t bindx, box_color_scheme_et color_sch = BOX_SCHEME_UNDEF);
 
-void box_show_group(uint8_t box_group);
+void box_show_group(uint8_t box_group, box_color_scheme_et color_sch = BOX_SCHEME_UNDEF);
 
 void box_update_area(void);
 
@@ -120,7 +142,7 @@ void box_clear(uint8_t bindx);
 
 void box_clear_group(uint8_t box_group);
 
-void box_paint(uint8_t bindx, uint8_t color_sch);
+void box_paint(uint8_t bindx, box_color_scheme_et color_sch = BOX_SCHEME_UNDEF);
 
 void box_scroll_down(uint8_t box_group);
 

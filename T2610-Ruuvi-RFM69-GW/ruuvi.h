@@ -2,12 +2,12 @@
 #define __RUUVI_H__
 // #include "uart.h"
 
-#define RUUVI_NBR_OF            6
 #define RUUVI_RFM_INTERVAL      60000
 #define RUUVI_DATA_POINTS       10
 #define RUUVI_NAME_LEN          20
 #define RUUVI_MAC_LEN           6
 #define RUUVI_AVG_POINTS        10
+
 
 typedef struct 
 {

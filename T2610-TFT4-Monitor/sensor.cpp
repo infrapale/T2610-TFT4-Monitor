@@ -31,6 +31,7 @@
 #include "sensor.h"
 #include "msg.h"
 #include "rfm.h"
+#include "time_func.h"
 
 #include "atask.h"
 
@@ -45,17 +46,21 @@ sensor_data_point_st sensor_data_point[DATA_POINT_NBR_OF] ={0};
 
 
 sensor_st sensor[SENSOR_NBR_OF] =
-{   //                      Label      undef,   temp    hum     pres    lux     pir     bat     val1    val2§§  updated
-    [SENSOR_UNDEFINED]  = {"Undef",     {   0,      0,      0,      0,      0,      0,      0,      0,      0}, false}, 
-    [SENSOR_PIHA1]      = {"PIHA1",     {   0,      1,      2,      0,      3,      0,      0,      0,      0}, false}, 
-    [SENSOR_RANTA]      = {"RANTA",     {   0,      6,      7,      0,      0,      0,      0,      0,      0}, false}, 
-    [SENSOR_KHH]        = {"KHH",       {   0,     10,     11,      0,      0,      0,      0,      0,      0}, false}, 
-    [SENSOR_PARVEKE]    = {"Parveke",   {   0,     12,     13,      0,      0,      0,     14,      0,      0}, false}, 
-    [SENSOR_RUUVI_3072] = {"3072",      {   0,     15,     16,      0,      0,      0,     17,      0,      0}, false}, 
-    [SENSOR_RUUVI_939B] = {"939B",      {   0,     18,     19,      0,      0,      0,     20,      0,      0}, false}, 
-    [SENSOR_RUUVI_1FEA] = {"1FEA",      {   0,     21,     22,      0,      0,      0,     23,      0,      0}, false}, 
-    [SENSOR_RUUVI_MH1]  = {"MH1",       {   0,     24,     25,      0,      0,      0,     26,      0,      0}, false}, 
+{   //                      L       abel          undef,   temp    hum     pres    lux     pir     bat     val1    val2§§  updated
+    [SENSOR_UNDEFINED]          = {"Undef",     {   0,      0,      0,      0,      0,      0,      0,      0,      0}, false}, 
+    [SENSOR_PIHA1]              = {"PIHA1",     {   0,      1,      2,      0,      3,      0,      0,      0,      0}, false}, 
+    [SENSOR_RANTA]              = {"RANTA",     {   0,      6,      7,      0,      0,      0,      0,      0,      0}, false}, 
+    [SENSOR_KHH]                = {"KHH",       {   0,     10,     11,      0,      0,      0,      0,      0,      0}, false}, 
+    [SENSOR_PARVEKE]            = {"Parveke",   {   0,     12,     13,      0,      0,      0,     14,      0,      0}, false}, 
+    [SENSOR_RUUVI_MH1]          = {"MH1-r",     {   0,     15,     16,      0,      0,      0,     17,      0,      0}, false}, 
+    [SENSOR_RUUVI_KHH]          = {"KHH-r",     {   0,     18,     19,      0,      0,      0,     20,      0,      0}, false}, 
+    [SENSOR_RUUVI_ULKO]         = {"Ulko-r",    {   0,     21,     22,      0,      0,      0,     23,      0,      0}, false}, 
+    [SENSOR_RUUVI_JAAKAAPPI]    = {"Jaakaappi", {   0,     24,     25,      0,      0,      0,     26,      0,      0}, false}, 
+    [SENSOR_RUUVI_PAKASTIN]     = {"Pakastin",  {   0,     27,     28,      0,      0,      0,     29,      0,      0}, false}, 
+    [SENSOR_RUUVI_TUPA]         = {"Tupa-r",    {   0,     30,     31,      0,      0,      0,     32,      0,      0}, false}, 
+    [SENSOR_RUUVI_PARVEKE]      = {"Parveke-r", {   0,     33,     34,      0,      0,      0,     35,      0,      0}, false}, 
 };
+
 
     
 char value_label[VALUE_NBR_OF][10] =
@@ -308,28 +313,22 @@ void sensor_process_msg(uint8_t  nbr_fields)
                 case SENSOR_UNDEFINED:
                     break;
                 case SENSOR_PIHA1:
-                    sensor_save_values(sindx);
-                    break;
                 case SENSOR_RANTA:
-                    sensor_save_values(sindx);
-                    break;
                 case SENSOR_KHH:
-                    sensor_save_values(sindx);
-                    break;
                 case SENSOR_PARVEKE:
-                    sensor_save_values(sindx);
-                    break;
-                case SENSOR_RUUVI_3072:
-                case SENSOR_RUUVI_939B:
-                case SENSOR_RUUVI_1FEA:
                 case SENSOR_RUUVI_MH1:
+                case SENSOR_RUUVI_KHH:
+                case SENSOR_RUUVI_ULKO:
+                case SENSOR_RUUVI_JAAKAAPPI:
+                case SENSOR_RUUVI_PAKASTIN:
+                case SENSOR_RUUVI_TUPA:
+                case SENSOR_RUUVI_PARVEKE:
                     sensor_save_values(sindx);
                     break;
-
-
             }
             break;
         case 'T':
+            time_set_comm_date_time(&rfm.rx);
             break;
          
     }

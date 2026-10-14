@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <Arduino.h>
 
+#define MENU_BTN_NBR_OF 4
 typedef struct
 {
     uint16_t x_pos;
@@ -39,7 +40,7 @@ typedef struct
 typedef struct 
 {
     char          row_label[20];
-    menu_item_st menu_item[4];
+    menu_item_st menu_item[MENU_BTN_NBR_OF];
 }  menu_row_st;
 
 void menu_initialize(void);

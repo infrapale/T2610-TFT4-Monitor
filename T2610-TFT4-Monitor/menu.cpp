@@ -11,6 +11,7 @@
 #define NBR_MENU_KEYS  4
 
 a4key a4_key(PIN_ABTN);
+extern box_group_st boxgr[];
 
 void dummy_cb()
 {
@@ -92,7 +93,7 @@ void menu_initialize(void)
   a4_key.begin();
   atask_add_new(&menu_th);
   atask_add_new(&kscan_h);
-  // menu_draw();
+  menu_draw();
 
 }
 
@@ -116,7 +117,7 @@ void menu_state_machine(void)
 {
     static char     keyc = 0x00;
     static uint32_t menu_timeout;
-    static uint8_t  menu_hr  = box_get_indx(BOX_GROUP_HEAD_ROOM, 0);
+    static uint8_t  menu_hr  = box_get_indx(BOX_GROUP_HEAD_ROOM, 0, 0);
     char txt[20];
 
     switch(menu_th.state)
@@ -134,7 +135,7 @@ void menu_state_machine(void)
             menu_btn_pressed(keyc);
             menu_th.state = 20;
             box_reserve(BOX_RESERVE_MENU);
-            box_paint(menu_hr, 6);
+            //box_paint(menu_hr, 6);
             sprintf(txt, "key pressed: %c", keyc);
             box_print_text(menu_hr, txt);
             box_show_one(menu_hr);
@@ -164,22 +165,12 @@ void menu_state_machine(void)
 
 void menu_draw(void)
 {
-    uint8_t bindx = box_get_indx(BOX_GROUP_16, 8);
-    box_paint(bindx, 0);
-    box_print_text(bindx, menu[menu_ctrl.active].row_label);
-    box_show_one(bindx);
-    bindx++;
-    box_clear(bindx);
-    box_paint(bindx, 0);
-
-    bindx = box_get_indx(BOX_GROUP_MENU, 0);
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        box_paint(bindx+i, 9);
-        box_print_text(bindx+i, menu[menu_ctrl.active].menu_item[i+1].label);
+    for (uint8_t i = 0; i < MENU_BTN_NBR_OF; i++){
+        uint8_t bindx = box_get_indx(BOX_GROUP_MENU, 0, i);
+        box_print_text(bindx, menu[menu_ctrl.active].menu_item[i].label);
+        box_paint(bindx+i, BOX_SCHEME_MENU);
     }
     box_show_group(BOX_GROUP_MENU);
-
 }
 
 void menu_button_scan(void)

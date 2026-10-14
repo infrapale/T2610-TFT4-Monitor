@@ -4,7 +4,7 @@
 #define MSG_TAG_LEN     8
 #define CMD_MAX_VALUES  8
 #define CMD_FIELD_LEN   8
-#define COMM_BUFF_LEN   64
+#define COMM_BUFF_LEN   80
 
 typedef enum
 {
