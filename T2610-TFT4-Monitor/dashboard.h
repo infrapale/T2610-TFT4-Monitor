@@ -21,7 +21,9 @@ typedef enum
 
 typedef enum
 {
-    DASHBOARD_TIME_SENSOR = 0,
+    DASHBOARD_TIME_TEMPERATURE = 0,
+    DASHBOARD_TIME_HUMIDITY,
+    DASHBOARD_TIME_BATTERY,
     DASHBOARD_BASIC_ROWS
 } dashboard_mode_et;
 
@@ -41,6 +43,8 @@ void dashboard_update_all(void);
 void dashboard_set_text(uint8_t box_indx, char *txt_ptr);
 
 void dashboard_set_mode(dashboard_mode_et new_mode);
+
+void dashboard_set_update_now(void);
 
 void dashboard_debug_print(void);
 

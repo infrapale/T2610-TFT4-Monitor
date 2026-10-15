@@ -13,6 +13,7 @@ typedef struct
 {
     dashboard_mode_et mode;
     bool show_sensor_value;
+    bool update_now;
     bool force_show_big_time;
     bool fast_forward;
     //bool show_basic_rows;
@@ -32,7 +33,7 @@ typedef struct
     uint8_t     pir_value;
 } dashboard_backlight_st;
 
-dashboard_ctrl_st dashboard_ctrl    = {DASHBOARD_TIME_SENSOR, false, true, false, 1, 0, 0, false};
+dashboard_ctrl_st dashboard_ctrl    = {DASHBOARD_TIME_TEMPERATURE, false, true, false, 1, 0, 0, false};
 dashboard_backlight_st backlight = {0};
 
 extern clock_st clock_mgr;   // from clock.cpp
@@ -71,7 +72,10 @@ void dashboard_set_mode(dashboard_mode_et new_mode)
    dashboard_ctrl.mode = new_mode; 
    dbh.state = 0;
 }
-
+void dashboard_set_update_now(void)
+{
+    dashboard_ctrl.update_now = true;
+}
 
 static bool box_valid(uint8_t group, uint8_t bindx)
 {
@@ -86,7 +90,7 @@ void dashboard_show_sensor_print(void){
     dashboard_set_mode(DASHBOARD_BASIC_ROWS);
 }
 void dashboard_show_time_sensor(void){
-    dashboard_set_mode(DASHBOARD_TIME_SENSOR);
+    dashboard_set_mode(DASHBOARD_TIME_TEMPERATURE);
 }
 
 static bool box_index_ok(uint8_t idx)
@@ -105,16 +109,19 @@ void dashboard_big_time(void)
     prev_minute = minute;
 
     char buff[40];
-    //time_hh_mm_to_string(buff );
-    // HH:MM
-    //snprintf(buff, sizeof(buff), " %02d:%02d", t->tm_hour, minute);
     snprintf(buff, sizeof(buff), " %02d:%02d", basic_time.hour, basic_time.minute);
     box_paint(idx_time_big, BOX_SCHEME_TIME);
     box_print_text(idx_time_big, buff);
+
+    uint8_t info_indx = box_get_indx(BOX_GROUP_TOP_INFO, 0, 0);
+    snprintf(buff, sizeof(buff), " %04d-%02d-%02d", basic_time.year, basic_time.month, basic_time.day);
+    box_paint(info_indx, BOX_SCHEME_INFO);
+    box_print_text(info_indx, buff);
+
 }
 
 
-bool dashboard_show_temperatures(void)
+void dashboard_show_sensor_value(value_et value_type)
 {
     char buff[40];
     uint8_t row= 0;
@@ -123,7 +130,7 @@ bool dashboard_show_temperatures(void)
     {
         if(sensor_get_updated(i)){
             uint8_t bindx = box_get_indx(BOX_GROUP_MID_5X2, row, col);
-            float val = sensor_get_value(i, VALUE_TEMPERATURE);
+            float val = sensor_get_value(i, value_type);
             snprintf(buff, sizeof(buff), "%s: %.1f", sensor_get_label(i), val);
             //snprintf(buff, sizeof(buff), "i: %d, row: %d col: %d", i, row, col);
             box_paint(bindx, BOX_SCHEME_SENSOR);
@@ -135,7 +142,11 @@ bool dashboard_show_temperatures(void)
             else col = 1;
         }
     }
-    return true;
+
+    uint8_t info_indx = box_get_indx(BOX_GROUP_TOP_INFO, 1, 0);
+    box_paint(info_indx, BOX_SCHEME_INFO);
+    box_print_text(info_indx, sensor_get_value_label(value_type));
+
 }
 void dashboard_next_sensor(void)
 {
@@ -158,7 +169,6 @@ void dashboard_previous_sensor(void)
 }
 
 
-
 void dashboard_update_task(void)
 {
     static uint32_t next_step_ms = 0;
@@ -176,18 +186,33 @@ void dashboard_update_task(void)
             break;
 
         case 20:
-            if (dashboard_show_temperatures()) {
-            //if (dashboard_show_sensor()) {
-                next_step_ms = millis() + 10000;
-                dbh.state = 30;
-            } else {
-                dbh.state = 10;
+            switch(dashboard_ctrl.mode)
+            {
+                case DASHBOARD_TIME_TEMPERATURE:
+                    dashboard_big_time();
+                    dashboard_show_sensor_value(VALUE_TEMPERATURE);
+                    next_step_ms = millis() + 10000;
+                    dbh.state = 30;
+                    break;
+                case DASHBOARD_TIME_HUMIDITY:
+                    dashboard_big_time();
+                    dashboard_show_sensor_value(VALUE_HUMIDITY);
+                    next_step_ms = millis() + 10000;
+                    dbh.state = 30;
+                    break;
+                case DASHBOARD_TIME_BATTERY:
+                    dashboard_big_time();
+                    dashboard_show_sensor_value(VALUE_BAT);
+                    next_step_ms = millis() + 10000;
+                    dbh.state = 30;
+                    break;
+                case DASHBOARD_BASIC_ROWS:
+                    break;
             }
-            break;
-
         case 30:
-            if (millis() > next_step_ms) {
-                //box_update_area();
+            if ((millis() > next_step_ms) || dashboard_ctrl.update_now) {
+                dashboard_ctrl.update_now = false;
+                dashboard_ctrl.mode = DASHBOARD_TIME_TEMPERATURE;
                 dbh.state = 10;
             }
             break;

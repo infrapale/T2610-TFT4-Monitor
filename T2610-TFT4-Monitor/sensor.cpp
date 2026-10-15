@@ -103,6 +103,10 @@ void sensor_initialize(void)
     atask_add_new(&sensor_th);
 }
 
+char *sensor_get_value_label(value_et value_type)
+{
+    return value_label[value_type];
+}
 
 void sensor_clear(uint8_t sindx)
 {
@@ -170,7 +174,7 @@ uint8_t sensor_value_print(uint8_t sindx, uint8_t vindx)
             value_array[arr_indx].max,
             value_array[arr_indx].average
         );
-        Serial.println(buff);
+        // Serial.println(buff);
     }
     return arr_indx;
 }

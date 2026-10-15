@@ -44,6 +44,7 @@ void rfm_rx_task(void)
                         rfm.rx.buff[rfm.rx.pos] = 0;
                         rfm.rx.avail = true;   // signal to msg_task()
                         rfm_rx_th.state = 20;
+                        //Serial.println(rfm.rx.buff);
                     }
                 } else {
                     if (rfm.rx.pos < RFM_MAX_MSG_LEN - 1) {
@@ -57,7 +58,7 @@ void rfm_rx_task(void)
             }
             break;
         case 20:
-            Serial.println(rfm.rx.buff);
+            Serial.println(rfm.rx.buff); Serial.flush();
             rfm.rx.field_count = msg_split(&rfm.rx, ';');
             sensor_process_msg(rfm.rx.field_count);
             rfm_rx_th.state = 5;

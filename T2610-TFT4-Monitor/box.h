@@ -1,7 +1,7 @@
 #ifndef __BOX_H__
 #define __BOX_H__
 #include "main.h"
-#include "box.h"
+
 // #include <TFT_eSPI.h> 
 
 #define BOX_MAX_NUMBER      64
@@ -31,6 +31,7 @@
 #define TFT_SMALL_ROW_HIGHT TFT_LS_HIGHT / TFT_LS_ROWS
 #define BOX_NUMERIC_ROWS    5
 #define BOX_NUMERIC_COLS    2
+#define BOX_TOP_INFO_WIDTH  180
 
 
 typedef enum 
@@ -40,7 +41,7 @@ typedef enum
     BOX_GROUP_8,
     BOX_GROUP_MID_5X2,
     BOX_GROUP_4,
-    BOX_GROUP_3,
+    BOX_GROUP_TOP_INFO,
     BOX_GROUP_2,
     BOX_GROUP_MENU,
     BOX_GROUP_HEAD_ROOM,
@@ -75,7 +76,7 @@ typedef enum
     BOX_SCHEME_TIMEOUT,
     BOX_SCHEME_ALARM_HIGH,
     BOX_SCHEME_ALARM_LOW,
-    BOX_SCHEME_9,
+    BOX_SCHEME_INFO,
 	BOX_SCHEME_10,
 	BOX_SCHEME_NBR_OF,
 } box_color_scheme_et;

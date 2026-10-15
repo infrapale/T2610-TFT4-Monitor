@@ -3,10 +3,11 @@
 #include "io.h"
 #include "menu.h"
 #include "atask.h"
-#include "BtnPinOnOff.h"
+// #include "BtnPinOnOff.h"
 #include "dashboard.h"
 #include "box.h"
 #include "a4key.h"
+#include "sensor.h"
 
 #define NBR_MENU_KEYS  4
 
@@ -23,7 +24,9 @@ void menu_test1(void)
    Serial.printf("Test 1\n");
 }
 
-void dashboard_show_sensor_print(void);
+void dashboard_show_temperature(void) { dashboard_set_mode(DASHBOARD_TIME_TEMPERATURE); dashboard_set_update_now();}
+void dashboard_show_humidity(void) { dashboard_set_mode(DASHBOARD_TIME_HUMIDITY); dashboard_set_update_now();}
+void dashboard_show_battery(void) { dashboard_set_mode(DASHBOARD_TIME_BATTERY); dashboard_set_update_now();}
 
 void dashboard_show_time_sensor(void);
 
@@ -36,7 +39,7 @@ menu_row_st menu[MENU_NBR_OF] =
     {
       {"Main",MENU_MAIN, dummy_cb },
       {"Time",MENU_TIME, menu_test1 },
-      {"Printer", MENU_SENSOR, dashboard_show_sensor_print},
+      {"Sensor", MENU_SENSOR, dummy_cb},
       {"Outd", MENU_OUTDOOR, dummy_cb}
     }
   },
@@ -54,10 +57,10 @@ menu_row_st menu[MENU_NBR_OF] =
   {
     "Sensors", 
     {
-      {"Main",MENU_MAIN, dashboard_show_time_sensor },
-      {"Prev.",MENU_SENSOR, dashboard_previous_sensor},
-      {"Next", MENU_SENSOR, dashboard_next_sensor},
-      {"Main", MENU_MAIN, dashboard_show_time_sensor}
+      {"Main",MENU_MAIN, dummy_cb },
+      {"Temp",MENU_SENSOR, dashboard_show_temperature},
+      {"Hum", MENU_SENSOR, dashboard_show_humidity},
+      {"Bat ",MENU_SENSOR, dashboard_show_battery}
      }
   },
   [MENU_OUTDOOR] =
@@ -75,7 +78,7 @@ menu_row_st menu[MENU_NBR_OF] =
 
 menu_ctrl_st menu_ctrl = {ATASK_NOT_DEFINED,  MENU_MAIN};
 
-BtnPinOnOff  menu_btn[NBR_MENU_KEYS];
+//BtnPinOnOff  menu_btn[NBR_MENU_KEYS];
 
 void menu_state_machine(void);
 
@@ -117,7 +120,7 @@ void menu_state_machine(void)
 {
     static char     keyc = 0x00;
     static uint32_t menu_timeout;
-    static uint8_t  menu_hr  = box_get_indx(BOX_GROUP_HEAD_ROOM, 0, 0);
+    //static uint8_t  menu_hr  = box_get_indx(BOX_GROUP_HEAD_ROOM, 0, 0);
     char txt[20];
 
     switch(menu_th.state)
@@ -128,17 +131,17 @@ void menu_state_machine(void)
         case 10:
             keyc = a4_key.read();
             if(keyc) Serial.printf("Key: %c\n",keyc);
-            //if(keyc != 0x00) menu_th.state = 20;
+            if(keyc != 0x00) menu_th.state = 20;
             // else dashboard 
             break;
         case 20:
             menu_btn_pressed(keyc);
             menu_th.state = 20;
-            box_reserve(BOX_RESERVE_MENU);
+            // box_reserve(BOX_RESERVE_MENU);
             //box_paint(menu_hr, 6);
             sprintf(txt, "key pressed: %c", keyc);
-            box_print_text(menu_hr, txt);
-            box_show_one(menu_hr);
+            // box_print_text(menu_hr, txt);
+            // box_show_one(menu_hr);
             menu_timeout = millis() + 10000;
             menu_th.state = 30; 
         case 30:
@@ -148,10 +151,10 @@ void menu_state_machine(void)
             }
             else {
                 if (millis() > menu_timeout){
-                    box_print_text(menu_hr, (char*)"menu timeout");
-                    box_show_one(menu_hr);
+                    // box_print_text(menu_hr, (char*)"menu timeout");
+                    // box_show_one(menu_hr);
                     menu_th.state = 10; 
-                    box_release(BOX_RESERVE_MENU);
+                    // box_release(BOX_RESERVE_MENU);
                 }              
             }
             break;
@@ -176,17 +179,6 @@ void menu_draw(void)
 void menu_button_scan(void)
 {
     a4_key.scan();
-}
-
-char menu_read_button(void)
-{
-    char c = 0x00;
-    for( uint8_t i= 0; i < NBR_MENU_KEYS; i++)
-    {
-        c = menu_btn[i].Read();
-        if (c != 0x00) break;
-    }
-    return c;
 }
 
 void menu_btn_pressed(char pressed)

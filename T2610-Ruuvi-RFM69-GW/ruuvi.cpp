@@ -151,7 +151,8 @@ void ruuvi_task(void)
                     ruuvi_th.state = 20;
                 }
             }
-            ruuvi_th.state = 100;
+            else 
+                ruuvi_th.state = 100;
             break;
         case 20:
             if (millis() > timeout) ruuvi_th.state = 100;

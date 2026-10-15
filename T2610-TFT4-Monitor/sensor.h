@@ -148,6 +148,8 @@ float sensor_get_value(uint8_t sindx, uint8_t vindx);
 
 char *sensor_get_label(uint8_t sindx);
 
+char *sensor_get_value_label(value_et value_type);
+
 bool sensor_get_updated(uint8_t sindx);
 
 #endif

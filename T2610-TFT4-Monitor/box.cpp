@@ -105,10 +105,12 @@ box_color_st box_color_scheme[BOX_SCHEME_NBR_OF] PROGMEM =
     [BOX_SCHEME_TIMEOUT]        = {.fill_color = TFT_SILVER,        .border_color = TFT_GOLD,           .text_color = TFT_DARKGREY },
     [BOX_SCHEME_ALARM_HIGH]     = {.fill_color = TFT_RED,           .border_color = TFT_RED,            .text_color = TFT_WHITE },
     [BOX_SCHEME_ALARM_LOW]      = {.fill_color = TFT_WHITE,         .border_color = TFT_NAVY,           .text_color = TFT_RED },
-    [BOX_SCHEME_9]              = {.fill_color = TFT_MAROON,        .border_color = TFT_SILVER,         .text_color = TFT_WHITE },
+    [BOX_SCHEME_INFO]           = {.fill_color = TFT_OLIVE,         .border_color = TFT_GOLD,           .text_color = TFT_WHITE },
     [BOX_SCHEME_10]             = {.fill_color = TFT_DARKCYAN,      .border_color = TFT_WHITE,          .text_color = TFT_WHITE },
     // [9] = {.fill_color = TFT_CYAN,          .border_color = TFT_MAGENTA,        .text_color = TFT_MAGENTA },
 };
+
+
 
 box_group_st boxgr[BOX_GROUP_NBR_OF] =
 {
@@ -171,7 +173,7 @@ box_group_st boxgr[BOX_GROUP_NBR_OF] =
         .y0=0, 
         .x0=0, 
         .height=TFT_LS_HIGHT / TFT_LS_ROWS * 4,  
-        .width=TFT_LS_WIDTH,    
+        .width=TFT_LS_WIDTH - BOX_TOP_INFO_WIDTH,    
         .round = 0, 
         .nbr_r=TFT_LS_ROWS/4, 
         .nbr_c=1,  .index = 0, 
@@ -180,18 +182,20 @@ box_group_st boxgr[BOX_GROUP_NBR_OF] =
         .txt_offs_y = 0,
         .txt_offs_x = 0,
         .color_scheme = BOX_SCHEME_UNDEF  },
-    [BOX_GROUP_3]           = {
+    [BOX_GROUP_TOP_INFO]           = {
         .y0=0, 
-        .x0=0, 
-        .height=TFT_LS_HIGHT / TFT_LS_ROWS * 4,  
-        .width=TFT_LS_WIDTH,    
-        .round = 0, .nbr_r=3,             
-        .nbr_c=1,  .index = 0, 
-        .font_indx = BOX_FONT_XXL_75,       
+        .x0=TFT_LS_WIDTH - BOX_TOP_INFO_WIDTH, 
+        .height=TFT_LS_HIGHT / TFT_LS_ROWS * 2,  
+        .width=BOX_TOP_INFO_WIDTH,    
+        .round = 4, 
+        .nbr_r=2,             
+        .nbr_c=1,  
+        .index = 0, 
+        .font_indx = BOX_FONT_MEDIUM_26,       
         .font_size = 1,
-        .txt_offs_y = 0,
-        .txt_offs_x = 0,
-        .color_scheme = BOX_SCHEME_UNDEF  },
+        .txt_offs_y = 8,
+        .txt_offs_x = 4,
+        .color_scheme = BOX_SCHEME_INFO  },
     [BOX_GROUP_2]           = {
         .y0=0, 
         .x0=0, 
@@ -396,7 +400,7 @@ void box_print_text(uint8_t bindx, char *txt)
 {
     box[bindx].visible = true;
     //Serial.printf("box_print_text: bindx: %d Font %d Color %d %s \n", bindx ,box[bindx].font_indx,box[bindx].text_color, box[bindx].txt);
-    Serial.printf("box_print_text: bindx: %d ypos %d\n", bindx ,box[bindx].y_pos);
+    //Serial.printf("box_print_text: bindx: %d ypos %d\n", bindx ,box[bindx].y_pos);
     strncpy(box[bindx].txt, txt, BOX_ROW_LEN);
     box_show_one(bindx);
 }
