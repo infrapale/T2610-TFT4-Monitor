@@ -5,6 +5,10 @@
 #include <time.h>
 #define   __APP__ ((char*)"T2610-Ruuvi-RFM69-GW")
 
+#define SENSOR_VILLA_ASTRID
+//#define SENSOR_PORTIMO_POLKU
+
+
 #define  MY_ADDR_LEN    8
 
 // WiFi Access Point

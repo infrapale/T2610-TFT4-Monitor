@@ -4,6 +4,9 @@
 #include <time.h>
 #define   __APP__ ((char*)"T2610_TFT4_Monitor")
 
+#define SENSOR_VILLA_ASTRID
+//#define SENSOR_PORTIMO_POLKU
+
 #define  MY_ADDR_LEN    8
 #define LABEL_LEN           12
 #define TXT_LEN             40

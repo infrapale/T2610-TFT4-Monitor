@@ -46,8 +46,9 @@ sensor_data_point_st sensor_data_point[DATA_POINT_NBR_OF] ={0};
 
 
 sensor_st sensor[SENSOR_NBR_OF] =
-{   //                      L       abel          undef,   temp    hum     pres    lux     pir     bat     val1    val2§§  updated
+{   //                      L       label          undef,   temp    hum     pres    lux     pir     bat     val1    val2§§  updated
     [SENSOR_UNDEFINED]          = {"Undef",     {   0,      0,      0,      0,      0,      0,      0,      0,      0}, false}, 
+    #if defined(SENSOR_VILLA_ASTRID)
     [SENSOR_PIHA1]              = {"PIHA1",     {   0,      1,      2,      0,      3,      0,      0,      0,      0}, false}, 
     [SENSOR_RANTA]              = {"RANTA",     {   0,      6,      7,      0,      0,      0,      0,      0,      0}, false}, 
     [SENSOR_KHH]                = {"KHH",       {   0,     10,     11,      0,      0,      0,      0,      0,      0}, false}, 
@@ -59,6 +60,10 @@ sensor_st sensor[SENSOR_NBR_OF] =
     [SENSOR_RUUVI_PAKASTIN]     = {"Pakastin",  {   0,     27,     28,      0,      0,      0,     29,      0,      0}, false}, 
     [SENSOR_RUUVI_TUPA]         = {"Tupa-r",    {   0,     30,     31,      0,      0,      0,     32,      0,      0}, false}, 
     [SENSOR_RUUVI_PARVEKE]      = {"Parveke-r", {   0,     33,     34,      0,      0,      0,     35,      0,      0}, false}, 
+    #elif defined(SENSOR_PORTIMO_POLKU)
+    [SENSOR_RUUVI_PORTIMO_1]    = {"Olohuone",  {   0,      1,      2,      0,      0,      0,      3,      0,      0}, false}, 
+    [SENSOR_RUUVI_PORTIMO_2]    = {"Keittio",   {   0,      4,      5,      0,      0,      0,      6,      0,      0}, false}, 
+    #endif
 };
 
 

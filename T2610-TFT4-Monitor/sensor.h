@@ -36,7 +36,8 @@ typedef enum
 
 typedef enum
 {
-    SENSOR_UNDEFINED,
+    SENSOR_UNDEFINED = 0,
+    #if defined(SENSOR_VILLA_ASTRID)
     SENSOR_PIHA1,
     SENSOR_RANTA,
     SENSOR_KHH,
@@ -48,6 +49,10 @@ typedef enum
     SENSOR_RUUVI_PAKASTIN,
     SENSOR_RUUVI_TUPA,
     SENSOR_RUUVI_PARVEKE,
+    #elif defined(SENSOR_PORTIMO_POLKU)
+    SENSOR_RUUVI_PORTIMO_1,
+    SENSOR_RUUVI_PORTIMO_2,
+    #endif
     SENSOR_NBR_OF,
 } sensor_et;
 

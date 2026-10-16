@@ -46,7 +46,9 @@ void initialize_tasks(void)
     io_initialize();
     //atask_add_new(&debug_print_handle);
     //uart_initialize();
+    #if defined(SENSOR_VILLA_ASTRID)
     r69_initialize();
+    #endif
     ruuvi_initialize();
 }
 
