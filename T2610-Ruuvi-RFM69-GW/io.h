@@ -40,10 +40,34 @@
 #define PIN_WD_ENABLE   PIN_SW_1
 #define PIN_EN_DEB      PIN_SW_2
 
+// Application Address
+#define PIN_SW_A0       PIN_SW_2
+#define PIN_SW_A1       PIN_SW_2
+#define PIN_SW_A2       PIN_SW_2
+#define PIN_SW_A3       PIN_SW_2
 
 #define BLINK_DISABLE  (9998)
 #define BLINK_FOREVER  (9999)
 #define IO_DIP_SW_NBR_OF    8
+
+typedef enum 
+{
+    APP_VILLA_ASTRID = 0,
+    APP_PORTIMO_POLKU,
+    APP_ARBORETUM,
+    APP_3,
+    APP_4,
+    APP_5,
+    APP_6,
+    APP_7,
+    APP_NBR_OF
+} app_indx_et;
+
+typedef struct 
+{
+    char label[APP_LABEL_LEN];
+} app_st;
+
 
 typedef enum
 {
