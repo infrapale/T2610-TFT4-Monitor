@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <btstack.h>
 #include "main.h"
+#include "app.h"
 #include "ruuvi.h"
 #include "io.h"
 #include "atask.h"
@@ -27,38 +28,8 @@ atask_st ruuvi_th            =    {"Ruuvi Task     ", 1000,    0,     0,  255,  
 
 ruuvi_st ruuvi = {0};
 
-typedef enum   // obsolete
-{
-    #if defined(SENSOR_VILLA_ASTRID)
-    RUUVI_2235 = 0,
-    RUUVI_3072,
-    RUUVI_6524,
-    RUUVI_939B,
-    RUUVI_1FEA,
-    RUUVI_36F8,
-    RUUVI_4145,
-    #elif defined( SENSOR_PORTIMO_POLKU)
-    RUUVI_1234 = 0,
-    RUUVI_9876,
-    #endif
-    RUUVI_NBR_OF
-} ruuvi_et;
-
-ruuvi_const_data_st ruuvit[RUUVI_NBR_OF] =
-{
-    #if defined(SENSOR_VILLA_ASTRID)
-    [RUUVI_2235] = { .name ="MH1-r", .mac ={0xE6,0x2C,0x8D,0xDB,0x22,0x35}},
-    [RUUVI_3072] = { .name ="KHH-r", .mac ={0xED,0x9A,0xAB,0xC6,0x30,0x72}},
-    [RUUVI_6524] = { .name ="Ulko-r", .mac ={0xF2,0x5B,0x48,0x64,0x65,0x24}},
-    [RUUVI_939B] = { .name ="Jaakaappi", .mac ={0xFC,0xBB,0xC3,0x29,0x93,0x9B}},
-    [RUUVI_1FEA] = { .name ="Pakastin", .mac ={0xE4,0x35,0x8F,0x17,0x1F,0xEA}},
-    [RUUVI_36F8] = { .name ="Tupa-r", .mac ={0xEA,0x78,0xE2,0x12,0x36,0xF8}},
-    [RUUVI_4145] = { .name ="Parveke-r", .mac ={0xF9,0x99,0xC1,0x14,0x14,0x54}},
-    #elif defined(SENSOR_PORTIMO_POLKU)
-    [RUUVI_1234] = { .name ="Olohuone", .mac ={0xEA,0x78,0xE2,0x12,0x12,0x34}},
-    [RUUVI_9876] = { .name ="Keittio", .mac ={0xF9,0x99,0xC1,0x14,0x98,0x76}},
-    #endif
-};
+extern app_ctrl_st app_ctrl;
+extern app_ruuvit_st app_ruuvit[];
 
 ruuvi_meta_st ruuvi_meta[RUUVI_NBR_OF] = {0};
 
@@ -134,7 +105,7 @@ void ruuvi_send_data(uint8_t rindx)
 {
     // <S;#;Abcdef;T;21.4;H;44.0;B;2.9;>
     sprintf(ruuvi.buff,"<S;%s;T;%.1f;H;%.0f;B;%.2f>",
-        ruuvit[rindx].name,
+        app_ruuvit[rindx].name,
         ruuvi_data[rindx].temp,
         ruuvi_data[rindx].hum,
         ruuvi_data[rindx].battery);
@@ -201,20 +172,34 @@ void handle_adv(uint8_t *packet) {
     for (int i = 0; i < len - 2; i++) {
         if (data[i] == 0x99 && data[i+1] == 0x04) {
             RuuviData rd;
+            // if (parseRuuviFormat5(&data[i], len - i, rd)) {
+            //     uint8_t rindx = 99;
+            //     bool tuttu_ruuvi = false;
+            //     for (rindx = 0; (rindx < RUUVI_NBR_OF) && !tuttu_ruuvi; rindx++) {
+            //         bool addr_match = true;
+            //         for (int n = 0; (n < 6) && addr_match; n++) {
+            //             if(addr[n] != ruuvit[rindx].mac[n]) addr_match = false;
+            //         }
+            //         if (addr_match) {
+            //             ruuvi.index = rindx;
+            //             tuttu_ruuvi = true;
+            //         }
+            //     }
             if (parseRuuviFormat5(&data[i], len - i, rd)) {
-                uint8_t rindx = 99;
+                uint8_t rindx;
                 bool tuttu_ruuvi = false;
-                for (rindx = 0; (rindx < RUUVI_NBR_OF) && !tuttu_ruuvi; rindx++) {
+                for (rindx = 0; (rindx < app_ctrl.nbr_in_app) && !tuttu_ruuvi; rindx++) {
+                    uint8_t app_rindx = app_ctrl.ruuvi[rindx];
                     bool addr_match = true;
                     for (int n = 0; (n < 6) && addr_match; n++) {
-                        if(addr[n] != ruuvit[rindx].mac[n]) addr_match = false;
+                        if(addr[n] != app_ruuvit[app_rindx].mac[n]) addr_match = false;
                     }
-                    if (addr_match) {
+                   if (addr_match) {
                         ruuvi.index = rindx;
                         tuttu_ruuvi = true;
                     }
+ 
                 }
-
                 if(tuttu_ruuvi){
                     // Serial.println("=== RuuviTag Found ===");
                     // Serial.println(ruuvi_data[ruuvi.index].name);

@@ -16,24 +16,13 @@ typedef struct
 
 typedef struct
 {
-  uint8_t pattern_bit;
-  uint8_t switches;
-  uint8_t tindx;
+    uint8_t app_indx;
+    uint8_t pattern_bit;
+    uint8_t switches;
+    uint8_t tindx;
 } io_ctrl_st;
 
 io_ctrl_st io_ctrl;
-
-app_indx_et 
-
-    APP_VILLA_ASTRID = 0,
-    APP_PORTIMO_POLKU,
-    APP_ARBORETUM,
-    APP_3,
-    APP_4,
-    APP_5,
-    APP_6,
-    APP_7,
-    APP_NBR_OF
 
 led_st led[LED_NBR_OF] =
 {
@@ -42,6 +31,8 @@ led_st led[LED_NBR_OF] =
 };
 
 uint8_t sw_pin[SW_NBR_OF] = {PIN_SW_1, PIN_SW_2, PIN_SW_3, PIN_SW_4, PIN_SW_5, PIN_SW_6, PIN_SW_7, PIN_SW_8 };
+uint8_t app_addr_pin[APP_SW_NBR_OF] = { PIN_SW_A0, PIN_SW_A1, PIN_SW_A2, PIN_SW_A3 };
+
 const uint32_t led_pattern[BLINK_NBR_OF] = 
 {
     [BLINK_OFF]       = 0b00000000000000000000000000000000,
@@ -91,6 +82,11 @@ void io_initialize(void)
     {
         pinMode(sw_pin[i], INPUT_PULLUP);
     } 
+    io_ctrl.app_indx = 0;
+    for (uint8_t i = 0; i < APP_SW_NBR_OF; i++)
+    {
+        if(digitalRead(app_addr_pin[i]) == LOW )  io_ctrl.app_indx += (1 << i);
+    } 
 
     io_ctrl.pattern_bit = 0;
     for (uint8_t i = LED_YELLOW; i <= LED_BLUE; i++)
@@ -99,6 +95,11 @@ void io_initialize(void)
         digitalWrite(led[i].pin, LOW);
     } 
     atask_add_new(&io_th);
+}
+
+uint8_t io_get_app_indx(void)
+{
+    return io_ctrl.app_indx;
 }
 
 uint8_t io_read_enable_debug(void)

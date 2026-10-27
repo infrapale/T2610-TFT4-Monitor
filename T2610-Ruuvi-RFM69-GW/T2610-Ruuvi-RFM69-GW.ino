@@ -28,12 +28,14 @@ https://learn.sparkfun.com/tutorials/rfm69hcw-hookup-guide/all
 //#include "uart.h"
 //#include "handler.h"
 #include "ruuvi.h"
+#include "app.h"
 
 //*********************************************************************************************
 #define SERIAL_BAUD   9600
 #define IO_TICK_INTERVAL    (100)
 
 main_ctrl_st ctrl = {0};
+
 
 void debug_print_task(void);
 void rfm_receive_task(void); 
@@ -44,12 +46,26 @@ void initialize_tasks(void)
 {
     atask_initialize();
     io_initialize();
+    ctrl.app_indx = io_get_app_indx();
     //atask_add_new(&debug_print_handle);
-    //uart_initialize();
+    switch((app_indx_et)ctrl.app_indx)
+    {
+        case APP_VILLA_ASTRID:
+            r69_initialize();
+            break;
+        case APP_PORTIMO_POLKU:
+            break;
+        case APP_ARBORETUM:
+            r69_initialize();
+            break;
+        default:
+            break;
+    }
     #if defined(SENSOR_VILLA_ASTRID)
     r69_initialize();
     #endif
     ruuvi_initialize();
+    app_initialize((app_indx_et)ctrl.app_indx);
 }
 
 

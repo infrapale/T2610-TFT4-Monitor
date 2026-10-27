@@ -29,6 +29,7 @@
 
 typedef struct
 {
+    uint8_t     app_indx;
     uint32_t next_io_tick;
     uint32_t next_super_tick;
     char my_addr[MY_ADDR_LEN];

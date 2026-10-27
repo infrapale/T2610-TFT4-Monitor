@@ -3,11 +3,13 @@
 // #include "uart.h"
 
 
+
 #define RUUVI_RFM_INTERVAL      60000
 #define RUUVI_DATA_POINTS       10
 #define RUUVI_NAME_LEN          20
 #define RUUVI_MAC_LEN           6
 #define RUUVI_AVG_POINTS        10
+#define RUUVI_NBR_OF            APP_MAX_TOTAL_NBR_OF_RUUVI
 
 
 typedef struct 
