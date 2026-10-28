@@ -39,7 +39,7 @@
 #define SW_NBR_OF       (8u)
 
 #define PIN_WD_ENABLE   PIN_SW_1
-#define PIN_EN_DEB      PIN_SW_2
+#define PIN_LTE_ENABLE  PIN_SW_2
 
 #define APP_SW_NBR_OF   (4u)
 // Application Address
@@ -89,5 +89,8 @@ void io_led_flash(LED_et color, blink_et bindx, uint16_t tick_nbr);
 void io_task(void);
 
 bool io_wd_is_enabled(void);
+
+bool io_lte_is_enabled(void);
+
 
 #endif

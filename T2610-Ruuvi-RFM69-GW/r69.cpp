@@ -7,6 +7,7 @@
 #include    "msg.h"
 #include    "io.h"
 #include    "r69.h"
+#include    "uart.h"
 // #include    "sensor.h"
 #include    "super.h"
 
@@ -45,13 +46,14 @@ void r69_initialize(void)
 {
 
     io_rfm69_spi0_initialize();
+    r69.next_conf_send  = millis() + 1000;
     r69.not_send_before = millis() + MIN_SEND_INTERVAL;
     // rfm69_modem.set_debug_print(debug_cb_print);
     rfm69_modem.initialize(key);
     rfm69_modem.radiate(__APP__);
 
     atask_add_new(&modem_th);
-    r69.tx_task_indx =  atask_add_new(&tx_th);
+    //r69.tx_task_indx =  atask_add_new(&tx_th);
     r69.rx_task_indx =  atask_add_new(&rx_th);
     
     // rfm69_modem.radiate(__APP__);
@@ -76,16 +78,18 @@ bool r69_ready_to_send(void)
 }
 
 
+
 // sensor_node_et sensor_node_send(void)
 // SENSOR_NODE_UNDEFINED
 
 void r69_tx_task(void)
 {
- 
+    static uint8_t start_up_conf_cntr = 0;
     switch(tx_th.state)
     {
         case 0:
             tx_th.state = 10;
+            r69.next_conf_send  = millis() + 500;
             break;
         case 10:
             if(r69.send_avail) tx_th.state = 20;
@@ -102,10 +106,6 @@ void r69_tx_task(void)
                 r69.send_avail = false;
             }
             break;
-        case 40:
-            tx_th.state = 10;
-            break;
-
     }
     super_clear_cntr(SUPER_CNTR_R69);
 
@@ -123,9 +123,8 @@ void r69_rx_task(void)
             if(rfm69_modem.msg_is_avail())
             {
                 rfm69_modem.get_msg(r69.rxbuff, R69_MSG_SIZE, true);
-                Serial.println(r69.rxbuff);
-                msg_send_tft(r69.rxbuff);
-                nbr_fields = msg_split(r69.rxbuff,';');
+                uart_tft_send(r69.rxbuff);
+                // nbr_fields = msg_split(r69.rxbuff,';');
                 // Serial.printf("Split nbr %d\n",nbr_fields);
                 // msg_sub_print();
                 switch (msg.fields[0][0])
@@ -144,7 +143,7 @@ void r69_rx_task(void)
             }
             break;
         case 20:
-            rx_th.state = 10;
+            if (millis() > r69.next_conf_send) rx_th.state = 10;
             break;
         case 30:
             rx_th.state = 10;

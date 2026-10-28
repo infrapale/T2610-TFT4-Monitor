@@ -14,6 +14,7 @@ typedef struct
     bool        send_avail;
     uint16_t    duration;
     uint16_t    not_send_before;
+    uint32_t    next_conf_send;
 
 } r69_st;
 

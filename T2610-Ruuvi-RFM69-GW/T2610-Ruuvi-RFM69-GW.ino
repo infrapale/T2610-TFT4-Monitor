@@ -23,19 +23,18 @@ https://learn.sparkfun.com/tutorials/rfm69hcw-hookup-guide/all
 #include "main.h"
 #include "secrets.h"
 #include "atask.h"
+#include "super.h"
 #include "io.h"
 #include "r69.h"
-//#include "uart.h"
-//#include "handler.h"
 #include "ruuvi.h"
 #include "app.h"
+#include "uart.h"
 
 //*********************************************************************************************
 #define SERIAL_BAUD   9600
 #define IO_TICK_INTERVAL    (100)
 
 main_ctrl_st ctrl = {0};
-
 
 void debug_print_task(void);
 void rfm_receive_task(void); 
@@ -47,7 +46,7 @@ void initialize_tasks(void)
     atask_initialize();
     io_initialize();
     ctrl.app_indx = io_get_app_indx();
-    //atask_add_new(&debug_print_handle);
+    atask_add_new(&debug_print_handle);
     switch((app_indx_et)ctrl.app_indx)
     {
         case APP_VILLA_ASTRID:
@@ -61,9 +60,7 @@ void initialize_tasks(void)
         default:
             break;
     }
-    #if defined(SENSOR_VILLA_ASTRID)
-    r69_initialize();
-    #endif
+    uart_initialize();
     ruuvi_initialize();
     app_initialize((app_indx_et)ctrl.app_indx);
 }
@@ -84,7 +81,9 @@ void setup()
 
     delay(2000);
 
-    Serial.print(__APP__); Serial.print(F(" Compiled: "));
+    Serial.print(__APP__); 
+    Serial.printf("Ver. %d",__VER__);
+    Serial.print(F(" Compiled: "));
     Serial.print(__DATE__); Serial.print(" ");
     Serial.print(__TIME__); Serial.println();
 
@@ -107,6 +106,7 @@ void loop1()
     if(millis() > ctrl.next_io_tick){
         ctrl.next_io_tick = millis() + IO_TICK_INTERVAL;
         io_task();
+        super_task();
     }
 }
 

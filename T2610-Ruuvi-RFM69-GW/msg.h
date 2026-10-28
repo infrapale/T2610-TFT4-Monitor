@@ -51,18 +51,9 @@ uint32_t msg_robust_atoi(const char *s, uint8_t *err_cntr, int min, int max );
 
 uint8_t msg_split(char *msg_inp,  char separator ); 
 
-size_t msg_set_sms_string(char *sms_str);
-
-void msg_process_sms_cmd(void);
-
-void msg_process(msg_from_et from, char *raw_msg );
-
 void msg_sub_print(void);
 
 void msg_time_action(void);
 
-void msg_send_repo1(void);
-
-void msg_send_tft(char *buff);
 
 #endif

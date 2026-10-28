@@ -97,13 +97,5 @@ void clock_task(void)
     {
         clock_mgr.last_hour = clock_mgr.my_time.tm_hour;
         Serial.printf("Hour: %d", clock_mgr.my_time.tm_hour);
-        msg_send_repo1();
-        //sensor_clear_all();
-        // switch(clock_mgr.my_time.tm_hour)
-        // {
-        //     case 8:
-        //         msg_send_repo1();
-        //         break;
-        // }
     }
 }

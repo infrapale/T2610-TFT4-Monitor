@@ -7,7 +7,7 @@
 #include "atask.h"
 #include "r69.h"
 #include "msg.h"
-//#include "uart.h"
+#include "uart.h"
 
 
 // -----------------------------
@@ -18,7 +18,7 @@
 typedef struct 
 {
     uint8_t index;
-    char    buff[UART_MSG_LEN];
+    char    buff[UART_BUFF_LEN];
 } ruuvi_st;
 
 void ruuvi_task(void);
@@ -109,11 +109,8 @@ void ruuvi_send_data(uint8_t rindx)
         ruuvi_data[rindx].temp,
         ruuvi_data[rindx].hum,
         ruuvi_data[rindx].battery);
-    Serial.println(ruuvi.buff);
-    //r69_send(ruuvi.buff);
-    msg_send_tft(ruuvi.buff);
-    //uart_add_msg(rdata->tx_indx, ruuvi.buff);
-}
+    uart_tft_send(ruuvi.buff);
+ }
 
 void ruuvi_task(void)
 {
