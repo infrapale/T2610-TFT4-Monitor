@@ -152,7 +152,7 @@ uint32_t msg_robust_atoi(const char *s, uint8_t *err_cntr, int min, int max)
     if (val > max)  *err_cntr++;
     if (val < min)  *err_cntr++;
     if (*err_cntr > 0) val = 0;
-    Serial.printf("%s %d !%d! ",s,val, *err_cntr );
+    // Serial.printf("%s %d !%d! ",s,val, *err_cntr );
     return val;
 }
 

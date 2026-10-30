@@ -32,6 +32,7 @@
 #include "msg.h"
 #include "rfm.h"
 #include "time_func.h"
+#include "app.h"
 
 #include "atask.h"
 
@@ -338,6 +339,9 @@ void sensor_process_msg(uint8_t  nbr_fields)
             break;
         case 'T':
             time_set_comm_date_time(&rfm.rx);
+            break;
+        case 'C':
+            app_process_conf_msg(&rfm.rx);
             break;
          
     }

@@ -77,7 +77,7 @@ void msg_process_sms_cmd(void);
 
 void msg_process(msg_from_et from, msg_st *msg);
 
-void msg_sub_print(void);
+void msg_sub_print(msg_st *msg);
 
 void msg_time_action(void);
 

@@ -22,9 +22,52 @@ void rfm_initialize(void)
     atask_add_new(&rfm_rx_th);
 }
 
+String rxLine;
+
+// void rfm_rx_task(void)
+// {
+//     switch (rfm_rx_th.state)
+//     {
+//         case 0:
+//             SerialRfm.setTimeout(10);   // reduce blocking time
+//             rfm_rx_th.state = 10;
+//             break;
+
+//         case 10:
+//             if (SerialRfm.available())
+//             {
+//                 rxLine.reserve(RFM_MAX_MSG_LEN);
+//                 rxLine = SerialRfm.readString();
+
+//                 if (rxLine.length())
+//                 {
+//                     rxLine.trim();   // remove CR/LF
+
+//                     strncpy(rfm.rx.buff,
+//                             rxLine.c_str(),
+//                             RFM_MAX_MSG_LEN - 1);
+
+//                     rfm.rx.buff[RFM_MAX_MSG_LEN - 1] = '\0';
+
+//                     rfm_rx_th.state = 20;
+//                 }
+//             }
+//             break;
+
+//         case 20:
+//             Serial.println(rfm.rx.buff);
+
+//             rfm.rx.field_count = msg_split(&rfm.rx, ';');
+//             sensor_process_msg(rfm.rx.field_count);
+
+//             rfm_rx_th.state = 10;
+//             break;
+//     }
+// }
+
 void rfm_rx_task(void)
 {
-    static  char c;
+    uint32_t timeout;
     switch(rfm_rx_th.state)
     {
         case 0:
@@ -36,23 +79,32 @@ void rfm_rx_task(void)
             rfm_rx_th.state = 10;
             break;
         case 10:
-            while (SerialRfm.available()) {
-                c = SerialRfm.read();
-                //Serial.printf("@%d-%c\n",rfm_pos,c);
-                if (c == '\n' || c == '\r') {
-                    if (rfm.rx.pos > 0) {
-                        rfm.rx.buff[rfm.rx.pos] = 0;
-                        rfm.rx.avail = true;   // signal to msg_task()
-                        rfm_rx_th.state = 20;
-                        //Serial.println(rfm.rx.buff);
-                    }
-                } else {
-                    if (rfm.rx.pos < RFM_MAX_MSG_LEN - 1) {
-                        rfm.rx.buff[rfm.rx.pos++] = c;
-                    } else {
-                        // overflow protection
-                        rfm.rx.buff[RFM_MAX_MSG_LEN - 1] = 0;
-                        rfm_rx_th.state = 100;
+            if(SerialRfm.available())
+            {
+                timeout = millis() + 10;
+                while (SerialRfm.available() || millis() < timeout ) {
+                    if(SerialRfm.available())
+                    {
+                        timeout = millis() + 10;
+                        char c = SerialRfm.read();
+                        // Serial.println(c,HEX);
+
+                        if (c == '\n' || c == '\r') {
+                            if (rfm.rx.pos > 0) {
+                                rfm.rx.buff[rfm.rx.pos] = 0;
+                                rfm.rx.avail = true;   // signal to msg_task()
+                                rfm_rx_th.state = 20;
+                                //Serial.println(rfm.rx.buff);
+                            }
+                        } else {
+                            if (rfm.rx.pos < RFM_MAX_MSG_LEN - 1) {
+                                rfm.rx.buff[rfm.rx.pos++] = c;
+                            } else {
+                                // overflow protection
+                                rfm.rx.buff[RFM_MAX_MSG_LEN - 1] = 0;
+                                rfm_rx_th.state = 100;
+                            }
+                        }
                     }
                 }
             }
@@ -72,7 +124,5 @@ void rfm_rx_task(void)
             rfm_rx_th.state = 10;
             break;
     }
-
-
 
 }

@@ -43,11 +43,12 @@ void setup() {
     delay(2000);
     Serial.println(__APP__);
     Serial.printf(" Compiled: %s %s\n",__DATE__, __TIME__);
-
+    io_initialize();
     atask_initialize();
-    // atask_add_new(&debug_th);
+    //atask_add_new(&debug_th);
+    io_task_initialize();
     sensor_initialize();
-    lte_initialize();
+    // lte_initialize();
     msg_initialize();
     rfm_initialize();
     clock_initialize();
@@ -56,7 +57,7 @@ void setup() {
     box_initialize();
     dashboard_initialize();   // start dashboard task
     menu_initialize();        // starting scan and read tasks
-    // dingdong_initialize();
+    // // dingdong_initialize();
     // dingdong_play_all();
 
 }
@@ -69,7 +70,7 @@ uint32_t rx_timeout;
 void loop() {
      // --- RUN SCHEDULER ---
     atask_run();   // or whatever your scheduler call is
-    lte_fast_read();
+    //lte_fast_read();
     super_clear_cntr(SUPER_CNTR_LOOP);
 }
 
@@ -78,7 +79,7 @@ void loop() {
 
 void print_debug_task(void)
 {
-    atask_print_status(true);
+    //atask_print_status(true);
     io_debug_print();
 
 }
