@@ -19,110 +19,46 @@ rfm_st rfm ={0};
 
 void rfm_initialize(void)
 {
-    atask_add_new(&rfm_rx_th);
+    // atask_add_new(&rfm_rx_th);   call directly in loop
 }
-
-String rxLine;
-
-// void rfm_rx_task(void)
-// {
-//     switch (rfm_rx_th.state)
-//     {
-//         case 0:
-//             SerialRfm.setTimeout(10);   // reduce blocking time
-//             rfm_rx_th.state = 10;
-//             break;
-
-//         case 10:
-//             if (SerialRfm.available())
-//             {
-//                 rxLine.reserve(RFM_MAX_MSG_LEN);
-//                 rxLine = SerialRfm.readString();
-
-//                 if (rxLine.length())
-//                 {
-//                     rxLine.trim();   // remove CR/LF
-
-//                     strncpy(rfm.rx.buff,
-//                             rxLine.c_str(),
-//                             RFM_MAX_MSG_LEN - 1);
-
-//                     rfm.rx.buff[RFM_MAX_MSG_LEN - 1] = '\0';
-
-//                     rfm_rx_th.state = 20;
-//                 }
-//             }
-//             break;
-
-//         case 20:
-//             Serial.println(rfm.rx.buff);
-
-//             rfm.rx.field_count = msg_split(&rfm.rx, ';');
-//             sensor_process_msg(rfm.rx.field_count);
-
-//             rfm_rx_th.state = 10;
-//             break;
-//     }
-// }
 
 void rfm_rx_task(void)
 {
-    uint32_t timeout;
-    switch(rfm_rx_th.state)
-    {
-        case 0:
-            rfm_rx_th.state = 5;
-            break;
-        case 5:
-            rfm.rx.pos = 0;
-            rfm.rx.avail = false;
-            rfm_rx_th.state = 10;
-            break;
-        case 10:
-            if(SerialRfm.available())
-            {
-                timeout = millis() + 10;
-                while (SerialRfm.available() || millis() < timeout ) {
-                    if(SerialRfm.available())
-                    {
-                        timeout = millis() + 10;
-                        char c = SerialRfm.read();
-                        // Serial.println(c,HEX);
+    while (SerialRfm.available()) {
+        char c = SerialRfm.read();
+        //Serial.printf("%d: %02X %c\n", rfm.rx.pos, c, c);
 
-                        if (c == '\n' || c == '\r') {
-                            if (rfm.rx.pos > 0) {
-                                rfm.rx.buff[rfm.rx.pos] = 0;
-                                rfm.rx.avail = true;   // signal to msg_task()
-                                rfm_rx_th.state = 20;
-                                //Serial.println(rfm.rx.buff);
-                            }
-                        } else {
-                            if (rfm.rx.pos < RFM_MAX_MSG_LEN - 1) {
-                                rfm.rx.buff[rfm.rx.pos++] = c;
-                            } else {
-                                // overflow protection
-                                rfm.rx.buff[RFM_MAX_MSG_LEN - 1] = 0;
-                                rfm_rx_th.state = 100;
-                            }
-                        }
-                    }
+        switch(c)
+        {
+            case '\r':
+                break;
+            case '\n':
+                //terminate = true;
+                rfm.rx.avail = true;
+                rfm.rx.buff[rfm.rx.pos] = 0;
+                break;
+            default:
+                if (rfm.rx.pos < RFM_MAX_MSG_LEN - 1) {
+                    rfm.rx.buff[rfm.rx.pos++] = c;
+                } else {
+                    // overflow protection
+                    rfm.rx.buff[RFM_MAX_MSG_LEN - 1] = 0;
+                    Serial.println("Overflow!");
+                    //rfm_rx_th.state = 100;
                 }
-            }
-            break;
-        case 20:
-            Serial.println(rfm.rx.buff); Serial.flush();
-            rfm.rx.field_count = msg_split(&rfm.rx, ';');
-            sensor_process_msg(rfm.rx.field_count);
-            rfm_rx_th.state = 5;
-            break;
-        case 100:
-            rfm.rx.buff[RFM_MAX_MSG_LEN - 1] = 0;
-            Serial.print("RX buffer limit:");
-            rfm_rx_th.state = 20;
-            break;
-        case 200:
-            rfm_rx_th.state = 10;
-            break;
-    }
+                break;
+        }
 
+    }
+    if(rfm.rx.avail)
+    {
+        Serial.println(rfm.rx.buff);
+        rfm.rx.field_count = msg_split(&rfm.rx, ';');
+        // msg_sub_print(&rfm.rx);
+        sensor_process_msg(rfm.rx.field_count);
+        rfm.rx.avail = false;
+        rfm.rx.pos = 0;
+        rfm.rx.buff[0] = 0;
+    }
 }
+

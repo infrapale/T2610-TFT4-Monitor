@@ -70,6 +70,7 @@ uint32_t rx_timeout;
 void loop() {
      // --- RUN SCHEDULER ---
     atask_run();   // or whatever your scheduler call is
+    rfm_rx_task();
     //lte_fast_read();
     super_clear_cntr(SUPER_CNTR_LOOP);
 }

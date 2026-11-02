@@ -18,4 +18,6 @@ typedef struct
 
 void rfm_initialize(void);
 
+void rfm_rx_task(void);
+
 #endif

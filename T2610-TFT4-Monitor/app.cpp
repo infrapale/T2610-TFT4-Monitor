@@ -40,7 +40,7 @@ void app_process_conf_msg(msg_st  *msgp)
     if ((msgp->field[0][0] == 'C') && (msgp->field_count))
     {
         strncpy(temp_conf.name, rfm.rx.field[1], APP_NAME_LEN );
-        for(uint8_t findx = 2; findx < msgp->field_count - 2; findx +=2)
+        for(uint8_t findx = 2; findx <= msgp->field_count - 2; findx +=2)
         {
             switch(msgp->field[findx][0])
             {
