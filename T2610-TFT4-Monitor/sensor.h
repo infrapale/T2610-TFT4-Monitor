@@ -17,7 +17,7 @@ typedef enum
     VALUE_TAG_LUX    = 'L',
     VALUE_TAG_PIR    = 'N',   
     VALUE_TAG_BAT    = 'B',   
-    VALUE_TAG_1      = '1',   
+    VALUE_TAG_1      = 'C',   
     VALUE_TAG_2      = '2',   
 } sensor_value_et;  
 
@@ -49,6 +49,7 @@ typedef enum
     SENSOR_RUUVI_PAKASTIN,
     SENSOR_RUUVI_TUPA,
     SENSOR_RUUVI_PARVEKE,
+    SENSOR_SCD30,
     #elif defined(SENSOR_PORTIMO_POLKU)
     SENSOR_RUUVI_PORTIMO_1,
     SENSOR_RUUVI_PORTIMO_2,

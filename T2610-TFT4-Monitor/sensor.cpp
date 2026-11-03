@@ -61,6 +61,7 @@ sensor_st sensor[SENSOR_NBR_OF] =
     [SENSOR_RUUVI_PAKASTIN]     = {"Pakastin",  {   0,     27,     28,      0,      0,      0,     29,      0,      0}, false}, 
     [SENSOR_RUUVI_TUPA]         = {"Tupa-r",    {   0,     30,     31,      0,      0,      0,     32,      0,      0}, false}, 
     [SENSOR_RUUVI_PARVEKE]      = {"Parveke-r", {   0,     33,     34,      0,      0,      0,     35,      0,      0}, false}, 
+    [SENSOR_SCD30]              = {"SCD30",     {   0,     36,     37,      0,      0,      0,      0,     38,      0}, false}, 
     #elif defined(SENSOR_PORTIMO_POLKU)
     [SENSOR_RUUVI_PORTIMO_1]    = {"Olohuone",  {   0,      1,      2,      0,      0,      0,      3,      0,      0}, false}, 
     [SENSOR_RUUVI_PORTIMO_2]    = {"Keittio",   {   0,      4,      5,      0,      0,      0,      6,      0,      0}, false}, 
@@ -312,7 +313,7 @@ void sensor_process_msg(uint8_t  nbr_fields)
     uint8_t sindx = SENSOR_UNDEFINED;
 
     // Serial.printf("Split nbr %d\n",nbr_fields);
-    // msg_sub_print();
+    msg_sub_print(&rfm.rx);
 
     switch(rfm.rx.field[0][0])
     {
@@ -333,6 +334,7 @@ void sensor_process_msg(uint8_t  nbr_fields)
                 case SENSOR_RUUVI_PAKASTIN:
                 case SENSOR_RUUVI_TUPA:
                 case SENSOR_RUUVI_PARVEKE:
+                case SENSOR_SCD30:
                     sensor_save_values(sindx);
                     break;
             }
